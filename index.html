@@ -237,6 +237,46 @@
       animation: pulse 1.5s infinite;
     }
 
+    /* Animações de teste */
+    @keyframes automatedTest {
+      0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+      100% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+    }
+
+    @keyframes qaTest {
+      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+      100% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+    }
+
+    .test-indicator {
+      position: absolute;
+      font-size: 1.2rem;
+      pointer-events: none;
+    }
+
+    .automated-test .log-content::before {
+      content: "⚙️";
+      margin-right: 0.5rem;
+    }
+
+    .qa-test .log-content::before {
+      content: "📋";
+      margin-right: 0.5rem;
+    }
+
+    .testing-active {
+      animation: pulse 1.5s infinite;
+      position: relative;
+    }
+
+    .automated-testing {
+      border: 2px solid #3b82f6;
+    }
+
+    .qa-testing {
+      border: 2px solid #22c55e;
+    }
+
     @media (max-width: 768px) {
       .container {
         flex-direction: column;
@@ -289,6 +329,7 @@
       <div class="branch-header">Hotfix</div>
       <div class="action-buttons">
         <button @click="commitAction('hotfix')">📝 Commit</button>
+        <button @click="autoTestHotfix" class="success">🧪 Testes Automatizados</button>
         <button @click="mergeHotfix" class="success">🔀 Merge</button>
         <button @click="deleteBranch('hotfix')" class="delete">🗑️ Excluir</button>
       </div>
@@ -403,7 +444,12 @@
 
   <div class="log-container">
     <h3>📜 Histórico de Ações</h3>
-    <div v-for="(entry, idx) in logs" :key="idx" class="log-entry">
+    <div
+            v-for="(entry, idx) in logs"
+            :key="idx"
+            class="log-entry"
+            :class="entry.type"
+    >
       <span class="log-timestamp">{{ entry.timestamp }}</span>
       <span class="log-content">{{ entry.message }}</span>
     </div>
@@ -587,27 +633,63 @@ new Vue({
 
     testFeature() {
       this.actionCounter++;
-      this.addLog(`🧪 Testando a branch FEATURE`);
-    },
-
-    qaTestFeature() {
-      this.actionCounter++;
-      this.addLog(`🧪 QA Testando a branch DEVELOP`);
-    },
-
-    qaTestStaging() {
-      this.actionCounter++;
-      this.addLog(`🧪 QA Testando a branch STAGING`);
+      this.addLog(`🧪 TESTE AUTOMATIZADO em FEATURE no servidor`);
+      this.showTestEffect('feature', 'automated');
     },
 
     autoTest() {
       this.actionCounter++;
-      this.addLog(`🧪 DEV rodando testes automatizados na branch DEVELOP`);
+      this.addLog(`🧪 TESTE AUTOMATIZADO em DESENVOLVIMENTO`, 'automated-test');
+      this.showTestEffect('develop', 'automated');
+    },
+
+    autoTestHotfix() {
+      this.actionCounter++;
+      this.addLog(`🧪 TESTE AUTOMATIZADO em HOTFIX no próprio computador`, 'automated-test');
+      this.showTestEffect('hotfix', 'automated');
     },
 
     autoTestStaging() {
       this.actionCounter++;
-      this.addLog(`🧪 DEV rodando testes automatizados na branch STAGING`);
+      this.addLog(`🧪 TESTE AUTOMATIZADO em STAGING`, 'automated-test');
+      this.showTestEffect('staging', 'automated');
+    },
+
+    qaTestFeature() {
+      this.actionCounter++;
+      this.addLog(`📋 TESTE MANUAL QA em DESENVOLVIMENTO`, 'qa-test');
+      this.showTestEffect('develop', 'qa');
+    },
+
+    qaTestStaging() {
+      this.actionCounter++;
+      this.addLog(`📋 TESTE MANUAL QA em STAGING`, 'qa-test');
+      this.showTestEffect('staging', 'qa');
+    },
+
+    showTestEffect(branch, testType) {
+      const branchName = branch.charAt(0).toUpperCase() + branch.slice(1);
+      const branchColumn = [...document.querySelectorAll('.branch-header')]
+              .find(el => el.textContent.includes(branchName))
+              ?.closest('.branch-column');
+      if (branchColumn) {
+        branchColumn.classList.add('testing-active', `${testType}-testing`);
+
+        // Adicionar ícone flutuante
+        const testIndicator = document.createElement('div');
+        testIndicator.className = 'test-indicator';
+        testIndicator.textContent = testType === 'automated' ? '⚙️' : '📋';
+        branchColumn.appendChild(testIndicator);
+
+        // Animação de propagação
+        branchColumn.style.animation = `${testType === 'automated' ? 'automatedTest' : 'qaTest'} 1s ease-out`;
+
+        setTimeout(() => {
+          branchColumn.classList.remove('testing-active', `${testType}-testing`);
+          branchColumn.style.animation = '';
+          testIndicator.remove();
+        }, 2000);
+      }
     },
 
     mergeFeature() {
@@ -700,10 +782,11 @@ new Vue({
     },
 
 
-    addLog(msg) {
+    addLog(msg, type = '') {
       this.logs.unshift({
         timestamp: new Date().toLocaleTimeString(),
-        message: `[${this.actionCounter}] - ${msg}`
+        message: `[${this.actionCounter}] - ${msg}`,
+        type: type
       });
       
       if (msg.includes('Merge')) {

@@ -220,6 +220,22 @@
       white-space: nowrap;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
     }
+    .commit-bubble.feature-flag::after {
+      content: '🚩';
+      position: absolute;
+      bottom: -5px;
+      right: -5px;
+      font-size: 0.8em;
+      background: var(--surface);
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      animation: pulse 1.5s infinite;
+    }
 
     @media (max-width: 768px) {
       .container {
@@ -369,12 +385,15 @@
       </div>
       <div class="commit-list">
         <div
-          v-for="(commit, idx) in branchData.feature"
-          :key="commit.id"
-          class="commit-bubble"
-          :class="{ latest: idx === branchData.feature.length - 1 }"
-          :data-branch="'feature'"
-          :data-commit-id="commit.id"
+                v-for="(commit, idx) in branchData.feature"
+                :key="commit.id"
+                class="commit-bubble"
+                :class="{
+                  latest: idx === branchData.feature.length - 1,
+                  'feature-flag': commit.featureFlag
+                }"
+                :data-branch="'feature'"
+                :data-commit-id="commit.id"
         >
           {{ commit.label }}
         </div>
@@ -418,7 +437,8 @@ new Vue({
       const idx = list.length;
       const newCommit = {
         id: Date.now() + Math.random(),
-        label: branchName.charAt(0).toUpperCase() + (idx + 1)
+        label: branchName.charAt(0).toUpperCase() + (idx + 1),
+        featureFlag: branchName === 'feature' // Adicione esta linha
       };
       list.push(newCommit);
 
@@ -453,7 +473,10 @@ new Vue({
 
     commitAction(branch) {
       this.actionCounter++;
-      this.createCommit(branch, true);
+      const newCommit = this.createCommit(branch, true);
+      if (branch === 'feature' && newCommit.featureFlag) {
+        this.addLog(`🚩 Commit na FEATURE com Feature Flag`);
+      }
     },
 
     createHotfix() {

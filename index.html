@@ -16,13 +16,11 @@
       --surface: #1e293b;
       --text: #f8fafc;
     }
-
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
       background: linear-gradient(45deg, var(--background), #1a2333);
@@ -30,7 +28,6 @@
       min-height: 100vh;
       overflow-x: auto;
     }
-
     .container {
       display: flex;
       gap: 2rem;
@@ -40,18 +37,15 @@
       min-width: 90%;
       position: relative;
     }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
     @keyframes pulse {
       0% { transform: scale(1); }
       50% { transform: scale(1.1); }
       100% { transform: scale(1); }
     }
-
     @keyframes drawLine {
       from { stroke-dashoffset: 1000; }
       to { stroke-dashoffset: 0; }
@@ -61,9 +55,6 @@
       stroke-dasharray: 1000;
       stroke-dashoffset: 1000;
     }
-
-    
-
     .branch-column {
       background: var(--surface);
       border-radius: 1rem;
@@ -73,11 +64,9 @@
       transition: all 0.3s ease;
       animation: fadeIn 0.5s ease-out;
     }
-
     .branch-column:hover {
       transform: translateY(-5px);
     }
-
     .branch-header {
       display: flex;
       align-items: center;
@@ -89,12 +78,10 @@
       border-radius: 0.5rem;
       background: linear-gradient(45deg, var(--primary), var(--secondary));
     }
-
     .branch-header::before {
       content: '🌿';
       filter: brightness(1.2);
     }
-
     .commit-list {
       display: flex;
       flex-direction: column;
@@ -102,7 +89,6 @@
       position: relative;
       min-height: 400px;
     }
-
     .commit-bubble {
       width: 50px;
       height: 50px;
@@ -118,12 +104,10 @@
       position: relative;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
     }
-
     .commit-bubble:hover {
       transform: scale(1.1);
       box-shadow: 0 0 15px var(--primary);
     }
-
     .commit-bubble.latest::after {
       content: '✨';
       position: absolute;
@@ -131,13 +115,11 @@
       top: -5px;
       font-size: 1.2rem;
     }
-
     .action-buttons {
       display: grid;
       gap: 0.75rem;
       margin-bottom: 1.5rem;
     }
-
     button {
       padding: 0.75rem 1.5rem;
       border: none;
@@ -151,24 +133,19 @@
       gap: 0.5rem;
       transition: all 0.3s ease;
     }
-
     button:hover {
       opacity: 0.9;
       transform: translateY(-2px);
     }
-
     button.delete {
       background: linear-gradient(45deg, var(--danger), #dc2626);
     }
-
     button.success {
       background: linear-gradient(45deg, var(--success), #16a34a);
     }
-
     button.warning {
       background: linear-gradient(45deg, var(--warning), #ca8a04);
     }
-
     .svg-lines {
       position: absolute;
       top: 0;
@@ -176,7 +153,6 @@
       pointer-events: none;
       z-index: 999;
     }
-
     .log-container {
       background: var(--surface);
       border-radius: 1rem;
@@ -186,7 +162,6 @@
       max-width: 1200px;
       box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
     }
-
     .log-entry {
       padding: 1rem;
       margin: 0.5rem 0;
@@ -197,16 +172,13 @@
       align-items: center;
       animation: fadeIn 0.3s ease;
     }
-
     .log-timestamp {
       color: #94a3b8;
       font-size: 0.9rem;
     }
-
     .log-content {
       flex-grow: 1;
     }
-
     [data-tooltip]:hover::after {
       content: attr(data-tooltip);
       position: absolute;
@@ -236,47 +208,37 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
       animation: pulse 1.5s infinite;
     }
-
-    /* Animações de teste */
     @keyframes automatedTest {
       0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
       100% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
     }
-
     @keyframes qaTest {
       0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
       100% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
     }
-
     .test-indicator {
       position: absolute;
       font-size: 1.2rem;
       pointer-events: none;
     }
-
     .automated-test .log-content::before {
       content: "⚙️";
       margin-right: 0.5rem;
     }
-
     .qa-test .log-content::before {
       content: "📋";
       margin-right: 0.5rem;
     }
-
     .testing-active {
       animation: pulse 1.5s infinite;
       position: relative;
     }
-
     .automated-testing {
       border: 2px solid #3b82f6;
     }
-
     .qa-testing {
       border: 2px solid #22c55e;
     }
-
     @media (max-width: 768px) {
       .container {
         flex-direction: column;
@@ -293,15 +255,15 @@
   <div ref="container" class="container">
     <svg class="svg-lines" :width="svgWidth" :height="svgHeight">
       <line
-  v-for="(line, index) in lines"
-  :key="`line-${index}-${line.isNew}`"
-  :class="{ 'new-line': line.isNew }"
-  :x1="line.x1" :y1="line.y1"
-  :x2="line.x2" :y2="line.y2"
-  stroke="#6366f1"
-  stroke-width="3"
-  stroke-linecap="round"
-/>
+              v-for="(line, index) in lines"
+              :key="`line-${index}-${line.isNew}`"
+              :class="{ 'new-line': line.isNew }"
+              :x1="line.x1" :y1="line.y1"
+              :x2="line.x2" :y2="line.y2"
+              stroke="#6366f1"
+              stroke-width="3"
+              stroke-linecap="round"
+      />
     </svg>
 
     <!-- Master Branch -->
@@ -312,12 +274,12 @@
       </div>
       <div class="commit-list">
         <div
-          v-for="(commit, idx) in branchData.master"
-          :key="commit.id"
-          class="commit-bubble"
-          :class="{ latest: idx === branchData.master.length - 1 }"
-          :data-branch="'master'"
-          :data-commit-id="commit.id"
+                v-for="(commit, idx) in branchData.master"
+                :key="commit.id"
+                class="commit-bubble"
+                :class="{ latest: idx === branchData.master.length - 1 }"
+                :data-branch="'master'"
+                :data-commit-id="commit.id"
         >
           {{ commit.label }}
         </div>
@@ -335,12 +297,12 @@
       </div>
       <div class="commit-list">
         <div
-          v-for="(commit, idx) in branchData.hotfix"
-          :key="commit.id"
-          class="commit-bubble"
-          :class="{ latest: idx === branchData.hotfix.length - 1 }"
-          :data-branch="'hotfix'"
-          :data-commit-id="commit.id"
+                v-for="(commit, idx) in branchData.hotfix"
+                :key="commit.id"
+                class="commit-bubble"
+                :class="{ latest: idx === branchData.hotfix.length - 1 }"
+                :data-branch="'hotfix'"
+                :data-commit-id="commit.id"
         >
           {{ commit.label }}
         </div>
@@ -358,12 +320,12 @@
       </div>
       <div class="commit-list">
         <div
-          v-for="(commit, idx) in branchData.staging"
-          :key="commit.id"
-          class="commit-bubble"
-          :class="{ latest: idx === branchData.staging.length - 1 }"
-          :data-branch="'staging'"
-          :data-commit-id="commit.id"
+                v-for="(commit, idx) in branchData.staging"
+                :key="commit.id"
+                class="commit-bubble"
+                :class="{ latest: idx === branchData.staging.length - 1 }"
+                :data-branch="'staging'"
+                :data-commit-id="commit.id"
         >
           {{ commit.label }}
         </div>
@@ -380,12 +342,12 @@
       </div>
       <div class="commit-list">
         <div
-          v-for="(commit, idx) in branchData.release"
-          :key="commit.id"
-          class="commit-bubble"
-          :class="{ latest: idx === branchData.release.length - 1 }"
-          :data-branch="'release'"
-          :data-commit-id="commit.id"
+                v-for="(commit, idx) in branchData.release"
+                :key="commit.id"
+                class="commit-bubble"
+                :class="{ latest: idx === branchData.release.length - 1 }"
+                :data-branch="'release'"
+                :data-commit-id="commit.id"
         >
           {{ commit.label }}
         </div>
@@ -399,41 +361,38 @@
         <button @click="autoTest" class="success">🧪 Testes Automatizados</button>
         <button @click="qaTestFeature" class="success">🧪 QA Testar</button>
         <button @click="createRelease" class="warning">🚀 Criar Release</button>
-        <button @click="createFeature" class="warning">⚙️ Criar Feature</button>
+        <button @click="createFeatureBranch" class="warning">⚙️ Criar Feature</button>
       </div>
       <div class="commit-list">
         <div
-          v-for="(commit, idx) in branchData.develop"
-          :key="commit.id"
-          class="commit-bubble"
-          :class="{ latest: idx === branchData.develop.length - 1 }"
-          :data-branch="'develop'"
-          :data-commit-id="commit.id"
+                v-for="(commit, idx) in branchData.develop"
+                :key="commit.id"
+                class="commit-bubble"
+                :class="{ latest: idx === branchData.develop.length - 1 }"
+                :data-branch="'develop'"
+                :data-commit-id="commit.id"
         >
           {{ commit.label }}
         </div>
       </div>
     </div>
 
-    <!-- Feature Branch -->
-    <div v-if="showFeature" class="branch-column">
-      <div class="branch-header">Feature</div>
+    <!-- Feature Branches -->
+    <div v-for="(featureBranch, index) in featureBranches" :key="featureBranch.name" class="branch-column">
+      <div class="branch-header">{{ featureBranch.name }}</div>
       <div class="action-buttons">
-        <button @click="commitAction('feature')">📝 Commit</button>
-        <button @click="testFeature" class="success">🧪 Testar</button>
-        <button @click="mergeFeature" class="success">🔀 Merge</button>
-        <button @click="deleteBranch('feature')" class="delete">🗑️ Excluir</button>
+        <button @click="commitFeature(featureBranch)">📝 Commit</button>
+        <button @click="testFeatureBranch(featureBranch)" class="success">🧪 Testar</button>
+        <button @click="mergeFeatureBranch(featureBranch)" class="success">🔀 Merge</button>
+        <button @click="deleteFeatureBranch(featureBranch)" class="delete">🗑️ Excluir</button>
       </div>
       <div class="commit-list">
         <div
-                v-for="(commit, idx) in branchData.feature"
+                v-for="(commit, idx) in featureBranch.commits"
                 :key="commit.id"
                 class="commit-bubble"
-                :class="{
-                  latest: idx === branchData.feature.length - 1,
-                  'feature-flag': commit.featureFlag
-                }"
-                :data-branch="'feature'"
+                :class="{ latest: idx === featureBranch.commits.length - 1, 'feature-flag': commit.featureFlag }"
+                :data-branch="featureBranch.name"
                 :data-commit-id="commit.id"
         >
           {{ commit.label }}
@@ -457,357 +416,377 @@
 </div>
 
 <script>
-new Vue({
-  el: '#app',
-  data() {
-    return {
-      branchData: { master: [], staging: [], develop: [], release: [], feature: [], hotfix: [] },
-      showHotfix: false,
-      showRelease: false,
-      showFeature: false,
-      lines: [],
-      svgWidth: 5000,
-      svgHeight: 5000,
-      actionCounter: 0,
-      logs: []
-    }
-  },
-  mounted() {
-    this.commitAction('master');
-    this.commitAction('staging');
-    this.commitAction('develop');
-  },
-  methods: {
-    createCommit(branchName, logIt = true) {
-      const list = this.branchData[branchName];
-      const idx = list.length;
-      const newCommit = {
-        id: Date.now() + Math.random(),
-        label: branchName.charAt(0).toUpperCase() + (idx + 1),
-        featureFlag: branchName === 'feature' // Adicione esta linha
-      };
-      list.push(newCommit);
+  new Vue({
+    el: '#app',
+    data() {
+      return {
+        branchData: { master: [], staging: [], develop: [], release: [], hotfix: [] },
+        featureBranches: [],
+        featureCounter: 1,
+        showHotfix: false,
+        showRelease: false,
+        lines: [],
+        svgWidth: 5000,
+        svgHeight: 5000,
+        actionCounter: 0,
+        logs: [],
+        version: { major: 1, minor: 0, patch: 0 }
+      }
+    },
+    mounted() {
+      this.commitAction('master');
+      this.commitAction('staging');
+      this.commitAction('develop');
+    },
+    methods: {
+      getVersionString() {
+        return `${this.version.major}.${this.version.minor}.${this.version.patch}`;
+      },
+      createCommit(branchName, logIt = true) {
+        const list = this.branchData[branchName];
+        const idx = list.length;
+        const newCommit = {
+          id: Date.now() + Math.random(),
+          label: branchName === 'master' ? `${this.getVersionString()}` : idx + 1,
+          featureFlag: branchName === 'feature'
+        };
+        list.push(newCommit);
+        if (idx > 0) {
+          const fromId = list[idx - 1].id;
+          this.lines.push({
+            fromBranch: branchName, fromId,
+            toBranch: branchName, toId: newCommit.id,
+            x1: 0, y1: 0, x2: 0, y2: 0,
+            isNew: true
+          });
+        }
+        if (logIt) this.addLog(`Commit na branch ${branchName.toUpperCase()}`);
+        this.$nextTick(() => {
+          this.updateLinePositions();
+          this.animateCommit(newCommit.id);
+        });
+        return newCommit;
+      },
 
-      if (idx > 0) {
-        const fromId = list[idx - 1].id;
-        const toId = newCommit.id;
+      createCommitForFeature(branch, logIt = true) {
+        const idx = branch.commits.length;
+        const newCommit = {
+          id: Date.now() + Math.random(),
+          label: (idx + 1),
+          featureFlag: true
+        };
+        branch.commits.push(newCommit);
+        if (idx > 0) {
+          this.lines.push({
+            fromBranch: branch.name, fromId: branch.commits[idx - 1].id,
+            toBranch: branch.name, toId: newCommit.id,
+            x1: 0, y1: 0, x2: 0, y2: 0,
+            isNew: true
+          });
+        }
+        if (logIt) this.addLog(`Commit na branch ${branch.name}`);
+        this.$nextTick(() => {
+          this.updateLinePositions();
+          this.animateCommit(newCommit.id);
+        });
+        return newCommit;
+      },
+
+      animateCommit(commitId) {
+        const commitEl = document.querySelector(`[data-commit-id="${commitId}"]`);
+        if (commitEl) {
+          commitEl.style.animation = 'pulse 0.5s ease';
+          setTimeout(() => commitEl.style.animation = '', 500);
+        }
+      },
+
+      commitAction(branch) {
+        this.actionCounter++;
+        const newCommit = this.createCommit(branch, true);
+        if (branch === 'feature' && newCommit.featureFlag) {
+          this.addLog(`🚩 Commit na FEATURE com Feature Flag`);
+        }
+      },
+
+      commitFeature(featureBranch) {
+        this.actionCounter++;
+        this.createCommitForFeature(featureBranch, true);
+      },
+
+      createHotfix() {
+        if (!this.showHotfix) {
+          const lastMasterCommit = this.branchData.master[this.branchData.master.length - 1];
+          this.showHotfix = true;
+          this.actionCounter++;
+          const newHotfixCommit = this.createCommit('hotfix', true);
+          if (lastMasterCommit) {
+            this.lines.push({
+              fromBranch: 'master',
+              fromId: lastMasterCommit.id,
+              toBranch: 'hotfix',
+              toId: newHotfixCommit.id,
+              x1: 0, y1: 0, x2: 0, y2: 0,
+              isNew: true
+            });
+          }
+          this.addLog(`🚑 Criou a branch HOTFIX`);
+        }
+      },
+
+      mergeStaging() {
+        const stgList = this.branchData.staging;
+        if (!stgList.length) return;
+        const lastStgCommit = this.branchData.staging[this.branchData.staging.length - 1];
+        if (!lastStgCommit) return;
+        this.version.minor++;
+        this.version.patch = 0;
+        const newMaster = this.createCommit('master', false);
+        const newDev = this.createCommit('develop', false);
+        this.lines.push(
+                { fromBranch: 'staging', fromId: lastStgCommit.id, toBranch: 'master', toId: newMaster.id, x1:0,y1:0,x2:0,y2:0, isNew: true },
+                { fromBranch: 'staging', fromId: lastStgCommit.id, toBranch: 'develop', toId: newDev.id, x1:0,y1:0,x2:0,y2:0, isNew: true }
+        );
+        this.actionCounter++;
+        this.addLog(`🔀 Merge STAGING -> MASTER & DEVELOP | Nova versão: ${this.getVersionString()}`);
+        this.$nextTick(() => this.updateLinePositions());
+      },
+
+      createRelease() {
+        if (!this.showRelease) {
+          const lastDevelopCommit = this.branchData.develop[this.branchData.develop.length - 1];
+          this.showRelease = true;
+          this.actionCounter++;
+          const newReleaseCommit = this.createCommit('release', true);
+          if (lastDevelopCommit) {
+            this.lines.push({
+              fromBranch: 'develop',
+              fromId: lastDevelopCommit.id,
+              toBranch: 'release',
+              toId: newReleaseCommit.id,
+              x1: 0, y1: 0, x2: 0, y2: 0,
+              isNew: true
+            });
+          }
+          this.addLog(`🚀 Criou a branch RELEASE`);
+        }
+      },
+
+      createFeatureBranch() {
+        const lastDevelopCommit = this.branchData.develop[this.branchData.develop.length - 1];
+        const branchName = this.generateFeatureBranchName();
+        const newFeatureBranch = { name: branchName, commits: [] };
+        this.featureBranches.push(newFeatureBranch);
+        this.actionCounter++;
+        const newCommit = this.createCommitForFeature(newFeatureBranch, true);
+        if (lastDevelopCommit) {
+          this.lines.push({
+            fromBranch: 'develop',
+            fromId: lastDevelopCommit.id,
+            toBranch: branchName,
+            toId: newCommit.id,
+            x1: 0, y1: 0, x2: 0, y2: 0,
+            isNew: true
+          });
+        }
+        this.addLog(`⚙️ Criou a branch FEATURE ${branchName}`);
+      },
+
+      generateFeatureBranchName() {
+        const words = ["lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing", "elit"];
+        const word1 = words[Math.floor(Math.random() * words.length)];
+        const word2 = words[Math.floor(Math.random() * words.length)];
+        const branchName = `feature/CNL-${this.featureCounter}-${word1}-${word2}`;
+        this.featureCounter++;
+        return branchName;
+      },
+
+      mergeRelease() {
+        const relList = this.branchData.release;
+        if (!relList.length) return;
+        const lastRel = relList[relList.length - 1];
+        const newStaging = this.createCommit('staging', false);
+        const newDev = this.createCommit('develop', false);
+        this.lines.push(
+                { fromBranch: 'release', fromId: lastRel.id, toBranch: 'staging', toId: newStaging.id, x1:0,y1:0,x2:0,y2:0, isNew: true },
+                { fromBranch: 'release', fromId: lastRel.id, toBranch: 'develop', toId: newDev.id, x1:0,y1:0,x2:0,y2:0, isNew: true }
+        );
+        this.actionCounter++;
+        this.addLog(`🔀 Merge RELEASE -> STAGING & DEVELOP`);
+        this.$nextTick(() => this.updateLinePositions());
+      },
+
+      testFeatureBranch(featureBranch) {
+        this.actionCounter++;
+        this.addLog(`🧪 TESTE AUTOMATIZADO em FEATURE ${featureBranch.name} no servidor`);
+        this.showTestEffect(featureBranch.name, 'automated');
+      },
+
+      autoTest() {
+        this.actionCounter++;
+        this.addLog(`🧪 TESTE AUTOMATIZADO em DESENVOLVIMENTO`, 'automated-test');
+        this.showTestEffect('develop', 'automated');
+      },
+
+      autoTestHotfix() {
+        this.actionCounter++;
+        this.addLog(`🧪 TESTE AUTOMATIZADO em HOTFIX no próprio computador`, 'automated-test');
+        this.showTestEffect('hotfix', 'automated');
+      },
+
+      autoTestStaging() {
+        this.actionCounter++;
+        this.addLog(`🧪 TESTE AUTOMATIZADO em STAGING`, 'automated-test');
+        this.showTestEffect('staging', 'automated');
+      },
+
+      qaTestFeature() {
+        this.actionCounter++;
+        this.addLog(`📋 TESTE MANUAL QA em DESENVOLVIMENTO`, 'qa-test');
+        this.showTestEffect('develop', 'qa');
+      },
+
+      qaTestStaging() {
+        this.actionCounter++;
+        this.addLog(`📋 TESTE MANUAL QA em STAGING`, 'qa-test');
+        this.showTestEffect('staging', 'qa');
+      },
+
+      showTestEffect(branch, testType) {
+        const branchColumn = [...document.querySelectorAll('.branch-header')]
+                .find(el => el.textContent.toLowerCase().includes(branch.toLowerCase()))
+                ?.closest('.branch-column');
+        if (branchColumn) {
+          branchColumn.classList.add('testing-active', `${testType}-testing`);
+          const testIndicator = document.createElement('div');
+          testIndicator.className = 'test-indicator';
+          testIndicator.textContent = testType === 'automated' ? '⚙️' : '📋';
+          branchColumn.appendChild(testIndicator);
+          branchColumn.style.animation = `${testType === 'automated' ? 'automatedTest' : 'qaTest'} 1s ease-out`;
+          setTimeout(() => {
+            branchColumn.classList.remove('testing-active', `${testType}-testing`);
+            branchColumn.style.animation = '';
+            testIndicator.remove();
+          }, 2000);
+        }
+      },
+
+      mergeFeatureBranch(featureBranch) {
+        const featList = featureBranch.commits;
+        if (!featList.length) return;
+        const lastFeat = featList[featList.length - 1];
+        const newDev = this.createCommit('develop', false);
         this.lines.push({
-          fromBranch: branchName, fromId,
-          toBranch: branchName, toId,
+          fromBranch: featureBranch.name, fromId: lastFeat.id,
+          toBranch: 'develop', toId: newDev.id,
           x1: 0, y1: 0, x2: 0, y2: 0,
           isNew: true
         });
-      }
-
-      if (logIt) this.addLog(`Commit na branch ${branchName.toUpperCase()}`);
-
-      this.$nextTick(() => {
-        this.updateLinePositions();
-        this.animateCommit(newCommit.id);
-      });
-
-      return newCommit;
-    },
-
-    animateCommit(commitId) {
-      const commitEl = document.querySelector(`[data-commit-id="${commitId}"]`);
-      if (commitEl) {
-        commitEl.style.animation = 'pulse 0.5s ease';
-        setTimeout(() => commitEl.style.animation = '', 500);
-      }
-    },
-
-    commitAction(branch) {
-      this.actionCounter++;
-      const newCommit = this.createCommit(branch, true);
-      if (branch === 'feature' && newCommit.featureFlag) {
-        this.addLog(`🚩 Commit na FEATURE com Feature Flag`);
-      }
-    },
-
-    createHotfix() {
-      if (!this.showHotfix) {
-        const lastMasterCommit = this.branchData.master[this.branchData.master.length - 1];
-        this.showHotfix = true;
         this.actionCounter++;
-        const newHotfixCommit = this.createCommit('hotfix', true);
-        
-        // Conexão com Master
-        if (lastMasterCommit) {
-          this.lines.push({
-            fromBranch: 'master',
-            fromId: lastMasterCommit.id,
-            toBranch: 'hotfix',
-            toId: newHotfixCommit.id,
-            x1: 0, y1: 0, x2: 0, y2: 0,
-            isNew: true
-          });
-        }
-        
-        this.addLog(`🚑 Criou a branch HOTFIX`);
-      }
-    },
-
-    mergeStaging() {
-      const stgList = this.branchData.staging;
-      if (!stgList.length) return;
-
-      const lastStgCommit = stgList[stgList.length - 1];
-      const newMaster = this.createCommit('master', false);
-      const newDev = this.createCommit('develop', false);
-      
-      this.lines.push(
-        { fromBranch: 'staging', fromId: lastStgCommit.id, toBranch: 'master', toId: newMaster.id, x1:0,y1:0,x2:0,y2:0, isNew: true },
-        { fromBranch: 'staging', fromId: lastStgCommit.id, toBranch: 'develop', toId: newDev.id, x1:0,y1:0,x2:0,y2:0, isNew: true }
-      );
-
-      this.actionCounter++;
-      this.addLog(`🔀 Merge STAGING -> MASTER & DEVELOP`);
-      this.$nextTick(() => this.updateLinePositions());
-    },
-
-    // Dentro do método createRelease
-    createRelease() {
-      if (!this.showRelease) {
-        const lastDevelopCommit = this.branchData.develop[this.branchData.develop.length - 1];
-        this.showRelease = true;
-        this.actionCounter++;
-        const newReleaseCommit = this.createCommit('release', true);
-        
-        // Adicionar linha de conexão com develop
-        if (lastDevelopCommit) {
-          this.lines.push({
-            fromBranch: 'develop',
-            fromId: lastDevelopCommit.id,
-            toBranch: 'release',
-            toId: newReleaseCommit.id,
-            x1: 0, y1: 0, x2: 0, y2: 0,
-            isNew: true
-          });
-        }
-        
-        this.addLog(`🚀 Criou a branch RELEASE`);
-      }
-    },
-
-    createFeature() {
-      if (!this.showFeature) {
-        const lastDevelopCommit = this.branchData.develop[this.branchData.develop.length - 1];
-        this.showFeature = true;
-        this.actionCounter++;
-        const newFeatureCommit = this.createCommit('feature', true);
-        
-        // Conexão com Develop
-        if (lastDevelopCommit) {
-          this.lines.push({
-            fromBranch: 'develop',
-            fromId: lastDevelopCommit.id,
-            toBranch: 'feature',
-            toId: newFeatureCommit.id,
-            x1: 0, y1: 0, x2: 0, y2: 0,
-            isNew: true
-          });
-        }
-        
-        this.addLog(`⚙️ Criou a branch FEATURE`);
-      }
-    },
-
-    mergeRelease() {
-      const relList = this.branchData.release;
-      if (!relList.length) return;
-
-      const lastRel = relList[relList.length - 1];
-      const newStaging = this.createCommit('staging', false);
-      const newDev = this.createCommit('develop', false);
-      
-      this.lines.push(
-        { fromBranch: 'release', fromId: lastRel.id, toBranch: 'staging', toId: newStaging.id, x1:0,y1:0,x2:0,y2:0, isNew: true },
-        { fromBranch: 'release', fromId: lastRel.id, toBranch: 'develop', toId: newDev.id, x1:0,y1:0,x2:0,y2:0, isNew: true }
-      );
-
-      this.actionCounter++;
-      this.addLog(`🔀 Merge RELEASE -> STAGING & DEVELOP`);
-      this.$nextTick(() => this.updateLinePositions());
-    },
-
-    testFeature() {
-      this.actionCounter++;
-      this.addLog(`🧪 TESTE AUTOMATIZADO em FEATURE no servidor`);
-      this.showTestEffect('feature', 'automated');
-    },
-
-    autoTest() {
-      this.actionCounter++;
-      this.addLog(`🧪 TESTE AUTOMATIZADO em DESENVOLVIMENTO`, 'automated-test');
-      this.showTestEffect('develop', 'automated');
-    },
-
-    autoTestHotfix() {
-      this.actionCounter++;
-      this.addLog(`🧪 TESTE AUTOMATIZADO em HOTFIX no próprio computador`, 'automated-test');
-      this.showTestEffect('hotfix', 'automated');
-    },
-
-    autoTestStaging() {
-      this.actionCounter++;
-      this.addLog(`🧪 TESTE AUTOMATIZADO em STAGING`, 'automated-test');
-      this.showTestEffect('staging', 'automated');
-    },
-
-    qaTestFeature() {
-      this.actionCounter++;
-      this.addLog(`📋 TESTE MANUAL QA em DESENVOLVIMENTO`, 'qa-test');
-      this.showTestEffect('develop', 'qa');
-    },
-
-    qaTestStaging() {
-      this.actionCounter++;
-      this.addLog(`📋 TESTE MANUAL QA em STAGING`, 'qa-test');
-      this.showTestEffect('staging', 'qa');
-    },
-
-    showTestEffect(branch, testType) {
-      const branchName = branch.charAt(0).toUpperCase() + branch.slice(1);
-      const branchColumn = [...document.querySelectorAll('.branch-header')]
-              .find(el => el.textContent.includes(branchName))
-              ?.closest('.branch-column');
-      if (branchColumn) {
-        branchColumn.classList.add('testing-active', `${testType}-testing`);
-
-        // Adicionar ícone flutuante
-        const testIndicator = document.createElement('div');
-        testIndicator.className = 'test-indicator';
-        testIndicator.textContent = testType === 'automated' ? '⚙️' : '📋';
-        branchColumn.appendChild(testIndicator);
-
-        // Animação de propagação
-        branchColumn.style.animation = `${testType === 'automated' ? 'automatedTest' : 'qaTest'} 1s ease-out`;
-
-        setTimeout(() => {
-          branchColumn.classList.remove('testing-active', `${testType}-testing`);
-          branchColumn.style.animation = '';
-          testIndicator.remove();
-        }, 2000);
-      }
-    },
-
-    mergeFeature() {
-      const featList = this.branchData.feature;
-      if (!featList.length) return;
-
-      const lastFeat = featList[featList.length - 1];
-      const newDev = this.createCommit('develop', false);
-      
-      this.lines.push({
-        fromBranch: 'feature', fromId: lastFeat.id,
-        toBranch: 'develop', toId: newDev.id,
-        x1: 0, y1: 0, x2: 0, y2: 0,
-        isNew: true
-      });
-
-      this.actionCounter++;
-      this.addLog(`🔀 Merge FEATURE -> DEVELOP`);
-      this.$nextTick(() => this.updateLinePositions());
-    },
-
-    mergeHotfix() {
-      const hfxList = this.branchData.hotfix;
-      if (!hfxList.length) return;
-
-      const lastHfx = hfxList[hfxList.length - 1];
-      const newMst = this.createCommit('master', false);
-      const newStg = this.createCommit('staging', false);
-      const newDev = this.createCommit('develop', false);
-      
-      this.lines.push(
-        { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'master', toId: newMst.id, x1:0,y1:0,x2:0,y2:0, isNew: true },
-        { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'staging', toId: newStg.id, x1:0,y1:0,x2:0,y2:0, isNew: true },
-        { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'develop', toId: newDev.id, x1:0,y1:0,x2:0,y2:0, isNew: true }
-      );
-
-      this.actionCounter++;
-      this.addLog(`🔀 Merge HOTFIX -> MASTER, STAGING & DEVELOP`);
-      this.$nextTick(() => this.updateLinePositions());
-    },
-
-    deleteBranch(branchName) {
-      if (['hotfix', 'release', 'feature'].includes(branchName)) {
-        this[`show${branchName.charAt(0).toUpperCase() + branchName.slice(1)}`] = false;
-        this.branchData[branchName] = [];
-        this.removeLinesFromBranch(branchName);
-        this.actionCounter++;
-        this.addLog(`🗑️ Excluiu a branch ${branchName.toUpperCase()}`);
+        this.addLog(`🔀 Merge FEATURE ${featureBranch.name} -> DEVELOP`);
         this.$nextTick(() => this.updateLinePositions());
-      }
-    },
+      },
 
-    removeLinesFromBranch(branchName) {
-      this.lines = this.lines.filter(line => 
-        line.fromBranch !== branchName && line.toBranch !== branchName
-      );
-    },
-
-    updateLinePositions() {
-      if (!this.$refs.container) return;
-      const containerRect = this.$refs.container.getBoundingClientRect();
-
-      this.lines.forEach(line => {
-        const fromEl = document.querySelector(
-          `[data-branch="${line.fromBranch}"][data-commit-id="${line.fromId}"]`
+      mergeHotfix() {
+        const hfxList = this.branchData.hotfix;
+        if (!hfxList.length) return;
+        const lastHfx = this.branchData.hotfix[this.branchData.hotfix.length - 1];
+        if (!lastHfx) return;
+        this.version.patch++;
+        const newMst = this.createCommit('master', false);
+        const newStg = this.createCommit('staging', false);
+        const newDev = this.createCommit('develop', false);
+        this.lines.push(
+                { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'master', toId: newMst.id, x1:0,y1:0,x2:0,y2:0, isNew: true },
+                { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'staging', toId: newStg.id, x1:0,y1:0,x2:0,y2:0, isNew: true },
+                { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'develop', toId: newDev.id, x1:0,y1:0,x2:0,y2:0, isNew: true }
         );
-        const toEl = document.querySelector(
-          `[data-branch="${line.toBranch}"][data-commit-id="${line.toId}"]`
-        );
+        this.actionCounter++;
+        this.addLog(`🔀 Merge HOTFIX -> MASTER, STAGING & DEVELOP | Nova versão: ${this.getVersionString()}`);
+        this.$nextTick(() => this.updateLinePositions());
+      },
 
-        if (fromEl && toEl) {
-          const fromRect = fromEl.getBoundingClientRect();
-          const toRect = toEl.getBoundingClientRect();
-          
-          line.x1 = fromRect.left - containerRect.left + fromRect.width/2;
-          line.y1 = fromRect.top - containerRect.top + fromRect.height/2;
-          line.x2 = toRect.left - containerRect.left + toRect.width/2;
-          line.y2 = toRect.top - containerRect.top + toRect.height/2;
+      deleteBranch(branchName) {
+        if (['hotfix', 'release'].includes(branchName)) {
+          this[`show${branchName.charAt(0).toUpperCase() + branchName.slice(1)}`] = false;
+          this.branchData[branchName] = [];
+          this.removeLinesFromBranch(branchName);
+          this.actionCounter++;
+          this.addLog(`🗑️ Excluiu a branch ${branchName.toUpperCase()}`);
+          this.$nextTick(() => this.updateLinePositions());
         }
-      });
-      
-      this.lines = [...this.lines];
-      this.markLineAsOld();
-    },
+      },
 
-    markLineAsOld() {
-      setTimeout(() => {
-        this.lines = this.lines.map(line => ({ ...line, isNew: false }));
-      }, 3100); // Tempo igual à duração da animação
-    },
+      deleteFeatureBranch(featureBranch) {
+        const index = this.featureBranches.findIndex(b => b.name === featureBranch.name);
+        if (index !== -1) {
+          this.featureBranches.splice(index, 1);
+          this.removeLinesFromBranch(featureBranch.name);
+          this.actionCounter++;
+          this.addLog(`🗑️ Excluiu a branch ${featureBranch.name}`);
+          this.$nextTick(() => this.updateLinePositions());
+        }
+      },
 
+      removeLinesFromBranch(branchName) {
+        this.lines = this.lines.filter(line =>
+                line.fromBranch !== branchName && line.toBranch !== branchName
+        );
+      },
 
-    addLog(msg, type = '') {
-      this.logs.unshift({
-        timestamp: new Date().toLocaleTimeString(),
-        message: `[${this.actionCounter}] - ${msg}`,
-        type: type
-      });
-      
-      if (msg.includes('Merge')) {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#6366f1', '#3b82f6', '#22c55e']
+      updateLinePositions() {
+        if (!this.$refs.container) return;
+        const containerRect = this.$refs.container.getBoundingClientRect();
+        this.lines.forEach(line => {
+          const fromEl = document.querySelector(
+                  `[data-branch="${line.fromBranch}"][data-commit-id="${line.fromId}"]`
+          );
+          const toEl = document.querySelector(
+                  `[data-branch="${line.toBranch}"][data-commit-id="${line.toId}"]`
+          );
+          if (fromEl && toEl) {
+            const fromRect = fromEl.getBoundingClientRect();
+            const toRect = toEl.getBoundingClientRect();
+            line.x1 = fromRect.left - containerRect.left + fromRect.width/2;
+            line.y1 = fromRect.top - containerRect.top + fromRect.height/2;
+            line.x2 = toRect.left - containerRect.left + toRect.width/2;
+            line.y2 = toRect.top - containerRect.top + toRect.height/2;
+          }
         });
-      }
-      if (msg.includes('Criou')) {
-        confetti({
-          particleCount: 30,
-          spread: 50,
-          origin: { y: 0.6 },
-          colors: ['#eab308']
+        this.lines = [...this.lines];
+        this.markLineAsOld();
+      },
+
+      markLineAsOld() {
+        setTimeout(() => {
+          this.lines = this.lines.map(line => ({ ...line, isNew: false }));
+        }, 3100);
+      },
+
+      addLog(msg, type = '') {
+        this.logs.unshift({
+          timestamp: new Date().toLocaleTimeString(),
+          message: `[${this.actionCounter}] - ${msg}`,
+          type: type
         });
+        if (msg.includes('Merge')) {
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#6366f1', '#3b82f6', '#22c55e']
+          });
+        }
+        if (msg.includes('Criou')) {
+          confetti({
+            particleCount: 30,
+            spread: 50,
+            origin: { y: 0.6 },
+            colors: ['#eab308']
+          });
+        }
       }
     }
-  }
-});
+  });
 </script>
 </body>
 </html>

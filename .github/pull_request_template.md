@@ -1,4 +1,4 @@
-## Formulário de GMUD - Preencha somente o item 2 se aplicável
+## Formulário de GMUD
 
 **1. Essa mudança pode quebrar o sistema?**
 - [ ] Sim

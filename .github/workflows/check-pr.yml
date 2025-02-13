@@ -54,15 +54,20 @@ jobs:
               pull_number: pull_number
             });
             const approved = reviews.data.some(r => r.state === "APPROVED");
-            return approved ? "SIM" : "NÃO";
+            
+            // Define uma saída "aprovacao" para esse step
+            core.setOutput("aprovacao", approved ? "SIM" : "NÃO");
 
       - name: Atualizar comentário sobre aprovação
         uses: actions/github-script@v6
         with:
           script: |
             const pull_number = context.payload.pull_request.number;
-            const aprovacao = steps.check_approvals.outputs.result;
+            // Pega a saída do step anterior via expression do YAML
+            const aprovacao = "${{ steps.check_approvals.outputs.aprovacao }}";
+            
             const body = `A mudança foi aprovada pelos devs responsáveis pelo PR? **${aprovacao}**`;
+            
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,

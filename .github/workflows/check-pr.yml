@@ -1,0 +1,69 @@
+name: Verificações de PR
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    types: [opened, reopened, synchronize, edited]
+
+jobs:
+  check-migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Verificar migrations
+        id: check_migrations
+        run: |
+          git fetch origin main
+          CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+          if echo "$CHANGED_FILES" | grep -q '^application/migrations/'; then
+            echo "::set-output name=has_migrations::true"
+          else
+            echo "::set-output name=has_migrations::false"
+          fi
+
+      - name: Atualizar comentário sobre banco de dados
+        if: steps.check_migrations.outputs.has_migrations == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pull_number = context.payload.pull_request.number;
+            const body = "Essa mudança terá alterações no banco de dados? **SIM**";
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pull_number,
+              body: body
+            });
+
+  check-approvals:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar aprovações
+        id: check_approvals
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pull_number = context.payload.pull_request.number;
+            const reviews = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pull_number
+            });
+            const approved = reviews.data.some(r => r.state === "APPROVED");
+            return approved ? "SIM" : "NÃO";
+
+      - name: Atualizar comentário sobre aprovação
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pull_number = context.payload.pull_request.number;
+            const aprovacao = steps.check_approvals.outputs.result;
+            const body = `A mudança foi aprovada pelos devs responsáveis pelo PR? **${aprovacao}**`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pull_number,
+              body: body
+            });

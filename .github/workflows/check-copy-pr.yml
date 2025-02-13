@@ -6,20 +6,26 @@ on:
     branches:
       - main
 
+permissions:
+  pull-requests: write
+  contents: write
+
 jobs:
   redirect-pr:
-    # Executa somente se o nome da branch de origem começar com "hotfix" ou "feature"
     if: startsWith(github.event.pull_request.head.ref, 'hotfix') || startsWith(github.event.pull_request.head.ref, 'feature')
     runs-on: ubuntu-latest
     steps:
       - name: Criar PR para develop
         id: create_pr
         uses: actions/github-script@v6
+        env:
+          # Use o seu PAT configurado em secrets (substitua PAT_TOKEN pelo nome que você configurou)
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
           script: |
             const originalPR = context.payload.pull_request;
             console.log("PR original #" + originalPR.number);
-            // Cria o PR para develop usando o mesmo head branch
+            // Cria o PR para a branch "develop"
             const newPR = await github.rest.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -28,14 +34,15 @@ jobs:
               base: "develop",
               body: `Pull Request para Main: ${originalPR.html_url}\n\n` + (originalPR.body || "")
             });
-            // Define outputs para uso nas etapas seguintes
             core.setOutput("newPRUrl", newPR.data.html_url);
             core.setOutput("newPRNumber", newPR.data.number.toString());
             core.setOutput("originalPRUrl", originalPR.html_url);
-            return newPR.data;
+            return JSON.stringify(newPR.data);
 
       - name: Comentar no PR original com link do PR para develop
         uses: actions/github-script@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
           script: |
             const originalPR = context.payload.pull_request;
@@ -51,18 +58,18 @@ jobs:
 
       - name: Atualizar corpo do PR para develop com link do PR original
         uses: actions/github-script@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
           script: |
             const newPRNumber = parseInt('${{ steps.create_pr.outputs.newPRNumber }}', 10);
             const originalPRUrl = '${{ steps.create_pr.outputs.originalPRUrl }}';
-            // Obtém o PR recém-criado
             const newPRResponse = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: newPRNumber
             });
             let newBody = newPRResponse.data.body || "";
-            // Atualiza o corpo para incluir o link do PR original
             newBody = `Pull Request para Main: ${originalPRUrl}\n\n` + newBody;
             await github.rest.pulls.update({
               owner: context.repo.owner,

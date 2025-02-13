@@ -3,9 +3,8 @@ name: Atualizar PR (Formulário GMUD)
 on:
   pull_request:
     branches: [ "main" ]
-    types: [opened, reopened, synchronize, edited]
+    types: [opened, reopened, synchronize]
 
-# Garanta que o token tem permissão para atualizar pull requests
 permissions:
   contents: write
   pull-requests: write
@@ -34,20 +33,18 @@ jobs:
         uses: actions/github-script@v6
         env:
           MIGRATIONS: ${{ steps.check_migrations.outputs.has_migrations }}
-          APROVACAO: ${{ steps.check_approvals.outputs.aprovacao }}
         with:
           script: |
             const pull_number = context.payload.pull_request.number;
             let currentBody = context.payload.pull_request.body || "";
-
-            // Atualiza a seção de migrations
-            const migrationText = `**${process.env.MIGRATIONS === 'true' ? 'SIM' : 'NÃO'}**`;
+            const now = new Date().toISOString();
+            // Constrói o texto para migrations com a data/hora atual
+            const migrationText = `**${process.env.MIGRATIONS === 'true' ? 'SIM' : 'NÃO'}** - ${now}`;
             if (currentBody.includes("<!-- MIGRATIONS_PLACEHOLDER -->")) {
               currentBody = currentBody.replace("<!-- MIGRATIONS_PLACEHOLDER -->", migrationText);
             } else {
               currentBody += "\n\n" + migrationText;
             }
-
             await github.rest.pulls.update({
               owner: context.repo.owner,
               repo: context.repo.repo,

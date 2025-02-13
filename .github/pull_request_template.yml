@@ -1,3 +1,4 @@
+version: 1
 name: "Formulário de GMUD"
 description: "Preencha os campos abaixo para enviar seu Pull Request."
 title: "[GMUD] - "
@@ -5,7 +6,7 @@ labels:
   - gmud
 body:
   - type: dropdown
-    id: quebra_sistema
+    id: quebrar_sistema
     attributes:
       label: "Essa mudança pode quebrar o sistema?"
       options:
@@ -13,12 +14,14 @@ body:
           value: "sim"
         - label: "Não"
           value: "nao"
+
   - type: textarea
     id: motivo
     attributes:
       label: "Caso a resposta acima for 'Sim', detalhe o motivo:"
-      description: "Informe os detalhes para que possamos avaliar o impacto."
+      description: "Explique o motivo da mudança que pode quebrar o sistema."
       placeholder: "Digite o motivo..."
+
   - type: dropdown
     id: prioridade
     attributes:
@@ -30,6 +33,7 @@ body:
           value: "na"
         - label: "Normal"
           value: "normal"
+
   - type: dropdown
     id: testes
     attributes:
@@ -39,8 +43,9 @@ body:
           value: "sim"
         - label: "Não"
           value: "nao"
+
   - type: dropdown
-    id: qa
+    id: homologado
     attributes:
       label: "A mudança foi homologada por QA?"
       options:
@@ -48,6 +53,7 @@ body:
           value: "sim"
         - label: "Não"
           value: "nao"
+
   - type: markdown
     attributes:
       value: "Essa mudança terá alterações no banco de dados? (Será atualizado automaticamente)"

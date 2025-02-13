@@ -17,6 +17,37 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          
+      - name: Atualizar título do PR para master
+        if: github.event.pull_request.base.ref == 'master'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pull_number = context.payload.pull_request.number;
+            const currentTitle = context.payload.pull_request.title || "";
+            if (currentTitle.includes("GMUD")) {
+              console.log("Título já contém GMUD, não atualizando.");
+              return;
+            }
+            const now = new Date();
+            const nowFormatted = now.toLocaleString('pt-BR', {
+              timeZone: 'America/Sao_Paulo',
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false
+            });
+            const newTitle = `Solicitação de GMUD - ${nowFormatted}`;
+            console.log("Atualizando título para: " + newTitle);
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pull_number,
+              title: newTitle
+            });
 
       # Detecta se o evento é "edited"
       - name: Verificar se é edição do corpo do PR
@@ -148,12 +179,16 @@ jobs:
               await ensureLabel(label);
             }
             // Adiciona as labels ao PR
-            await github.rest.issues.addLabels({
+            if (labelsToAdd.length > 0) {
+              await github.rest.issues.addLabels({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pull_number,
               labels: labelsToAdd
             });
+            } else {
+              console.log("Nenhuma label para adicionar.");
+            }
             // Lista as labels atualmente aplicadas no PR
             const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
               owner: context.repo.owner,
@@ -214,7 +249,6 @@ jobs:
               labelToAdd = "Tests Failed";
               labelToRemove = "Tests Passed";
             }
-            // Função auxiliar para garantir que a label exista
             async function ensureLabel(label) {
               try {
                 await github.rest.issues.getLabel({
@@ -235,23 +269,22 @@ jobs:
                 }
               }
             }
-            // Garante que a label a ser adicionada exista
             await ensureLabel(labelToAdd);
-            // Adiciona a label de teste ao PR
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pull_number,
-              labels: [ labelToAdd ]
-            });
-            // Lista as labels atualmente aplicadas no PR
+            // Se houver labels para adicionar, aplica-as (verifica se o array não está vazio)
+            if ([labelToAdd].length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pull_number,
+                labels: [ labelToAdd ]
+              });
+            }
             const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pull_number
             });
             const currentLabelNames = currentLabels.map(label => label.name);
-            // Remove a label oposta, se estiver presente
             if (currentLabelNames.includes(labelToRemove)) {
               await github.rest.issues.removeLabel({
                 owner: context.repo.owner,
@@ -260,3 +293,40 @@ jobs:
                 name: labelToRemove
               });
             }
+            // Se o teste fake falhar, lança um erro para interromper o workflow
+            if (testResult === 'failed') {
+              throw new Error("Fake tests failed.");
+            }
+
+      # Se os testes passaram, solicita automaticamente o revisor "dilneiss"
+      - name: Solicitar aprovação automática e atribuição
+        if: steps.check_tests.outputs.testResult == 'passed'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pull_number = context.payload.pull_request.number;
+            const pr = context.payload.pull_request;
+            // Verifica se já há algum revisor designado
+            if (pr.requested_reviewers && pr.requested_reviewers.length > 0) {
+              console.log("Já existe um revisor designado. Nenhuma ação tomada.");
+              return;
+            }
+            // Define a lista de revisores possíveis
+            const reviewersList = ["dilneiss", "dilneiss", "dilneiss"];
+            // Seleciona aleatoriamente um revisor
+            const selectedReviewer = reviewersList[Math.floor(Math.random() * reviewersList.length)];
+            console.log(`Revisor selecionado: ${selectedReviewer}`);
+            // Solicita o revisor selecionado
+            await github.rest.pulls.requestReviewers({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pull_number,
+              reviewers: [selectedReviewer]
+            });
+            // Atribui o revisor como responsável (assignee)
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pull_number,
+              assignees: [selectedReviewer]
+            });

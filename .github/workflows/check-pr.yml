@@ -1,0 +1,78 @@
+name: Atualizar PR (Formulário GMUD)
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    types: [opened, reopened, synchronize, edited]
+
+# Garanta que o token tem permissão para atualizar pull requests
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  atualizar-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Verificar alterações de migrations
+        id: check_migrations
+        run: |
+          git fetch origin main
+          CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+          if echo "$CHANGED_FILES" | grep -q '^application/migrations/'; then
+            echo "::set-output name=has_migrations::true"
+          else
+            echo "::set-output name=has_migrations::false"
+          fi
+
+      - name: Verificar aprovações
+        id: check_approvals
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pull_number = context.payload.pull_request.number;
+            const reviews = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pull_number
+            });
+            const approved = reviews.data.some(r => r.state === "APPROVED");
+            core.setOutput("aprovacao", approved ? "SIM" : "NÃO");
+
+      - name: Atualizar corpo do PR (formulário GMUD)
+        uses: actions/github-script@v6
+        env:
+          MIGRATIONS: ${{ steps.check_migrations.outputs.has_migrations }}
+          APROVACAO: ${{ steps.check_approvals.outputs.aprovacao }}
+        with:
+          script: |
+            const pull_number = context.payload.pull_request.number;
+            let currentBody = context.payload.pull_request.body || "";
+
+            // Atualiza a seção de migrations
+            const migrationText = `Essa mudança terá alterações no banco de dados? **${process.env.MIGRATIONS === 'true' ? 'SIM' : 'NÃO'}**`;
+            if (currentBody.includes("<!-- MIGRATIONS_PLACEHOLDER -->")) {
+              currentBody = currentBody.replace("<!-- MIGRATIONS_PLACEHOLDER -->", migrationText);
+            } else {
+              currentBody += "\n\n" + migrationText;
+            }
+
+            // Atualiza a seção de aprovação
+            const approvalText = `A mudança foi aprovada pelos devs responsáveis pelo PR? **${process.env.APROVACAO}**`;
+            if (currentBody.includes("<!-- APPROVAL_PLACEHOLDER -->")) {
+              currentBody = currentBody.replace("<!-- APPROVAL_PLACEHOLDER -->", approvalText);
+            } else {
+              currentBody += "\n\n" + approvalText;
+            }
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pull_number,
+              body: currentBody
+            });

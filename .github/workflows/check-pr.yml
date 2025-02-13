@@ -1,9 +1,9 @@
-name: Atualizar PR (Formulário GMUD)
+name: GMUD produção
 
 on:
   pull_request:
     branches: [ "main" ]
-    types: [opened, reopened, synchronize, edited]
+    types: [ opened, reopened, synchronize, edited ]
 
 permissions:
   contents: write
@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Verifica se o evento é "edited"
+      # Detecta se o evento é "edited"
       - name: Verificar se é edição do corpo do PR
         id: check_event
         run: |
@@ -29,7 +29,7 @@ jobs:
             echo "::set-output name=edited::false"
           fi
 
-      # Checa alterações de migrations somente se NÃO for "edited"
+      # Verifica alterações de migrations (executa somente se NÃO for "edited")
       - name: Verificar alterações de migrations
         id: check_migrations
         if: steps.check_event.outputs.edited == 'false'
@@ -52,7 +52,6 @@ jobs:
           script: |
             const pull_number = context.payload.pull_request.number;
             let currentBody = context.payload.pull_request.body || "";
-
             const now = new Date();
             const nowFormatted = now.toLocaleString('pt-BR', {
               timeZone: 'America/Sao_Paulo',
@@ -64,14 +63,12 @@ jobs:
               second: '2-digit',
               hour12: false
             });
-
             const migrationText = `**${process.env.MIGRATIONS === 'true' ? 'SIM' : 'NÃO'}** - ${nowFormatted}`;
             if (currentBody.includes("<!-- MIGRATIONS_PLACEHOLDER -->")) {
               currentBody = currentBody.replace("<!-- MIGRATIONS_PLACEHOLDER -->", migrationText);
             } else {
               currentBody += "\n\n" + migrationText;
             }
-
             await github.rest.pulls.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -79,8 +76,8 @@ jobs:
               body: currentBody
             });
 
-      # Aplica labels (rodando sempre, mesmo em edição)
-      - name: Aplicar labels
+      # Aplica e remove labels conforme as condições do formulário
+      - name: Aplicar labels do formulário
         if: always()
         uses: actions/github-script@v6
         with:
@@ -88,49 +85,36 @@ jobs:
             const pull_number = context.payload.pull_request.number;
             const prBody = context.payload.pull_request.body || "";
             const edited = context.payload.action === "edited";
-
-            // Se não for 'edited', usamos a saída do step check_migrations
+            // Se não for 'edited', usamos a saída do step check_migrations; se for, não atualizamos a label Migration.
             let hasMigrations = false;
             if (!edited) {
               hasMigrations = '${{ steps.check_migrations.outputs.has_migrations }}' === 'true';
             }
-
             let labelsToAdd = [];
-
-            // Se houver migrations, adiciona label "Migration"
             if (hasMigrations) {
               labelsToAdd.push("Migration");
             }
-
-            // Se o campo "Essa mudança pode quebrar o sistema?" estiver marcado como Sim
+            // Verifica se a opção "Essa mudança pode quebrar o sistema?" está marcada como Sim
             const breakRegex = /\*\*1\. Essa mudança pode quebrar o sistema\?\*\*\s*- \[[xX]\]\s+Sim/;
             if (breakRegex.test(prBody)) {
               labelsToAdd.push("Breaking Changes");
             }
-
-            // Se a prioridade for "Crítica"
+            // Se prioridade for "Crítica"
             const criticRegex = /\*\*3\. Classifique a prioridade dessa mudança:\*\*\s*- \[[xX]\]\s+Crítica/;
             if (criticRegex.test(prBody)) {
               labelsToAdd.push("Critic");
             }
-
-            // Se a prioridade for "Normal"
+            // Se prioridade for "Normal"
             const normalRegex = /\*\*3\. Classifique a prioridade dessa mudança:\*\*\s*- \[[xX]\]\s+Normal/;
             if (normalRegex.test(prBody)) {
               labelsToAdd.push("Normal");
             }
-
             // Se "A mudança foi homologada por QA?" estiver marcada como Sim
             const qaRegex = /\*\*4\. A mudança foi homologada por QA\?\*\*\s*- \[[xX]\]\s+Sim/;
             if (qaRegex.test(prBody)) {
               labelsToAdd.push("QA validated");
             }
-
-            if (labelsToAdd.length === 0) {
-              console.log("Nenhuma label para adicionar.");
-              return;
-            }
-
+            console.log("Labels para adicionar: " + JSON.stringify(labelsToAdd));
             const labelConfigs = {
               "Migration": "0E8A16",         // verde
               "Breaking Changes": "5319E7",  // roxo
@@ -138,53 +122,31 @@ jobs:
               "Normal": "1D76DB",            // azul
               "QA validated": "0E8A16"       // verde
             };
-
-            // Para cada label, verifica se ela já existe; se não, cria; se sim, opcionalmente atualiza a cor
-            for (const label of labelsToAdd) {
-              let exists = false;
+            // Função auxiliar para verificar e criar/atualizar label
+            async function ensureLabel(label) {
               try {
                 await github.rest.issues.getLabel({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   name: label
                 });
-                exists = true;
               } catch (error) {
                 if (error.status === 404) {
-                  exists = false;
-                } else {
-                  throw error;
-                }
-              }
-
-              if (!exists) {
-                try {
                   await github.rest.issues.createLabel({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     name: label,
                     color: labelConfigs[label]
                   });
-                } catch (error) {
-                  // Se o erro for 422 (já existe), ignora
-                  if (error.status !== 422) {
-                    throw error;
-                  }
-                }
-              } else {
-                try {
-                  await github.rest.issues.updateLabel({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    current_name: label,
-                    color: labelConfigs[label]
-                  });
-                } catch (error) {
-                  console.log(`Falha ao atualizar label ${label}: ${error.message}`);
+                } else {
+                  throw error;
                 }
               }
             }
-
+            // Cria ou atualiza as labels que devem ser aplicadas
+            for (const label of labelsToAdd) {
+              await ensureLabel(label);
+            }
             // Adiciona as labels ao PR
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
@@ -192,3 +154,109 @@ jobs:
               issue_number: pull_number,
               labels: labelsToAdd
             });
+            // Lista as labels atualmente aplicadas no PR
+            const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pull_number
+            });
+            const currentLabelNames = currentLabels.map(l => l.name);
+            // Define as labels que queremos remover se não forem mais atendidas
+            const removableLabels = ["Critic", "Breaking Changes", "QA validated"];
+            for (const label of removableLabels) {
+              if (currentLabelNames.includes(label) && !labelsToAdd.includes(label)) {
+                console.log(`Removendo label: ${label}`);
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pull_number,
+                  name: label
+                });
+              }
+            }
+
+  fake-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # Executa o teste fake: se houver alterações de migration, o teste é "passed"; senão, "failed"
+      - name: Executar teste fake de migrations
+        id: check_tests
+        run: |
+          git fetch origin main
+          if git diff --name-only origin/main...HEAD | grep -q '^application/migrations/'; then
+            echo "::set-output name=testResult::passed"
+          else
+            echo "::set-output name=testResult::failed"
+          fi
+
+      # Atualiza as labels de teste conforme o resultado
+      - name: Atualizar labels de teste
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pull_number = context.payload.pull_request.number;
+            const testResult = '${{ steps.check_tests.outputs.testResult }}';
+            console.log("Resultado do teste fake: " + testResult);
+            const labelConfigs = {
+              "Tests Passed": "0E8A16", // verde
+              "Tests Failed": "FF0000"  // vermelho
+            };
+            let labelToAdd, labelToRemove;
+            if (testResult === 'passed') {
+              labelToAdd = "Tests Passed";
+              labelToRemove = "Tests Failed";
+            } else {
+              labelToAdd = "Tests Failed";
+              labelToRemove = "Tests Passed";
+            }
+            // Função auxiliar para garantir que a label exista
+            async function ensureLabel(label) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label
+                });
+              } catch (error) {
+                if (error.status === 404) {
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: label,
+                    color: labelConfigs[label]
+                  });
+                } else {
+                  throw error;
+                }
+              }
+            }
+            // Garante que a label a ser adicionada exista
+            await ensureLabel(labelToAdd);
+            // Adiciona a label de teste ao PR
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pull_number,
+              labels: [ labelToAdd ]
+            });
+            // Lista as labels atualmente aplicadas no PR
+            const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pull_number
+            });
+            const currentLabelNames = currentLabels.map(label => label.name);
+            // Remove a label oposta, se estiver presente
+            if (currentLabelNames.includes(labelToRemove)) {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pull_number,
+                name: labelToRemove
+              });
+            }

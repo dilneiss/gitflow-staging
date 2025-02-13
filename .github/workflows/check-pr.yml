@@ -264,3 +264,7 @@ jobs:
                 name: labelToRemove
               });
             }
+            // Se o teste fake falhar, lança um erro para interromper o workflow
+            if (testResult === 'failed') {
+              throw new Error("Fake tests failed.");
+            }

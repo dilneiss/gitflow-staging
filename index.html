@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <title>Gitflow Interactive</title>
   <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
@@ -239,6 +239,40 @@
     .qa-testing {
       border: 2px solid #22c55e;
     }
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: var(--surface);
+      padding: 2rem;
+      border-radius: 1rem;
+      width: 300px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+    .modal h2 {
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+    .modal p {
+      margin: 0.5rem 0;
+      color: var(--text);
+    }
+    .modal-buttons {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: space-around;
+    }
     @media (max-width: 768px) {
       .container {
         flex-direction: column;
@@ -278,7 +312,7 @@
                 :key="commit.id"
                 class="commit-bubble"
                 :class="{ latest: idx === branchData.master.length - 1 }"
-                :data-branch="'master'"
+                data-branch="master"
                 :data-commit-id="commit.id"
         >
           {{ commit.label }}
@@ -301,7 +335,7 @@
                 :key="commit.id"
                 class="commit-bubble"
                 :class="{ latest: idx === branchData.hotfix.length - 1 }"
-                :data-branch="'hotfix'"
+                data-branch="hotfix"
                 :data-commit-id="commit.id"
         >
           {{ commit.label }}
@@ -324,7 +358,7 @@
                 :key="commit.id"
                 class="commit-bubble"
                 :class="{ latest: idx === branchData.staging.length - 1 }"
-                :data-branch="'staging'"
+                data-branch="staging"
                 :data-commit-id="commit.id"
         >
           {{ commit.label }}
@@ -346,7 +380,7 @@
                 :key="commit.id"
                 class="commit-bubble"
                 :class="{ latest: idx === branchData.release.length - 1 }"
-                :data-branch="'release'"
+                data-branch="release"
                 :data-commit-id="commit.id"
         >
           {{ commit.label }}
@@ -369,7 +403,7 @@
                 :key="commit.id"
                 class="commit-bubble"
                 :class="{ latest: idx === branchData.develop.length - 1 }"
-                :data-branch="'develop'"
+                data-branch="develop"
                 :data-commit-id="commit.id"
         >
           {{ commit.label }}
@@ -413,6 +447,20 @@
       <span class="log-content">{{ entry.message }}</span>
     </div>
   </div>
+
+  <!-- Merge Approval Modal -->
+  <div class="modal-overlay" v-if="mergeModalVisible">
+    <div class="modal">
+      <h2>Aprovação de DEV</h2>
+      <p>Senior: {{ mergeModalData.senior }}</p>
+      <p>Acompanhamento: {{ mergeModalData.junior }}</p>
+      <p>Aprovado?</p>
+      <div class="modal-buttons">
+        <button class="success" @click="confirmMerge">Sim</button>
+        <button class="delete" @click="rejectMerge">Não</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -430,7 +478,9 @@
         svgHeight: 5000,
         actionCounter: 0,
         logs: [],
-        version: { major: 1, minor: 0, patch: 0 }
+        version: { major: 1, minor: 0, patch: 0 },
+        mergeModalVisible: false,
+        mergeModalData: {}
       }
     },
     mounted() {
@@ -716,7 +766,6 @@
             line.y2 = toRect.top - containerRect.top + toRect.height / 2;
           }
         });
-        // Reassign to trigger reactivity
         this.lines = [...this.lines];
         this.markLineAsOld();
       },
@@ -753,15 +802,22 @@
         const juniors = ["Marcos", "Fabio", "Gabriel", "Gustavo F", "Gustavo K", "Milena"];
         const selectedSenior = seniors[Math.floor(Math.random() * seniors.length)];
         const selectedJunior = juniors[Math.floor(Math.random() * juniors.length)];
-        const approved = confirm(
-                `Aprovação de DEV:\nSenior: ${selectedSenior}\nAcompanhamento: ${selectedJunior}\nAprovado?`
-        );
-        if (approved) {
-          this.addLog("PR Aprovado pelos devs designados");
-          callback();
-        } else {
-          this.addLog("Reenvia para o Dev responsável corrigir");
+        this.mergeModalData = {
+          senior: selectedSenior,
+          junior: selectedJunior,
+          callback: callback
+        };
+        this.mergeModalVisible = true;
+      },
+      confirmMerge() {
+        if (this.mergeModalData.callback) {
+          this.mergeModalData.callback();
         }
+        this.mergeModalVisible = false;
+      },
+      rejectMerge() {
+        this.addLog("Reenvia para o Dev responsável corrigir");
+        this.mergeModalVisible = false;
       },
       createFeatureBranch() {
         const lastDevelopCommit = this.branchData.develop[this.branchData.develop.length - 1];

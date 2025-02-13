@@ -1,4 +1,4 @@
-name: Atualizar PR (Formulário GMUD)
+name: GMUD produção
 
 on:
   pull_request:
@@ -79,7 +79,7 @@ jobs:
               body: currentBody
             });
 
-      # Aplica labels (rodando sempre, mesmo em edição)
+      # Aplica e remove labels conforme as condições
       - name: Aplicar labels
         if: always()
         uses: actions/github-script@v6
@@ -102,7 +102,7 @@ jobs:
               labelsToAdd.push("Migration");
             }
 
-            // Se o campo "Essa mudança pode quebrar o sistema?" estiver marcado como Sim
+            // Se "Essa mudança pode quebrar o sistema?" estiver marcada como Sim
             const breakRegex = /\*\*1\. Essa mudança pode quebrar o sistema\?\*\*\s*- \[[xX]\]\s+Sim/;
             if (breakRegex.test(prBody)) {
               labelsToAdd.push("Breaking Changes");
@@ -126,10 +126,7 @@ jobs:
               labelsToAdd.push("QA validated");
             }
 
-            if (labelsToAdd.length === 0) {
-              console.log("Nenhuma label para adicionar.");
-              return;
-            }
+            console.log("Labels to add: " + JSON.stringify(labelsToAdd));
 
             const labelConfigs = {
               "Migration": "0E8A16",         // verde
@@ -139,7 +136,7 @@ jobs:
               "QA validated": "0E8A16"       // verde
             };
 
-            // Para cada label, verifica se ela já existe; se não, cria; se sim, opcionalmente atualiza a cor
+            // Cria ou atualiza as labels que devem ser aplicadas
             for (const label of labelsToAdd) {
               let exists = false;
               try {
@@ -156,7 +153,6 @@ jobs:
                   throw error;
                 }
               }
-
               if (!exists) {
                 try {
                   await github.rest.issues.createLabel({
@@ -166,7 +162,6 @@ jobs:
                     color: labelConfigs[label]
                   });
                 } catch (error) {
-                  // Se o erro for 422 (já existe), ignora
                   if (error.status !== 422) {
                     throw error;
                   }
@@ -192,3 +187,30 @@ jobs:
               issue_number: pull_number,
               labels: labelsToAdd
             });
+
+            // Lista as labels atualmente aplicadas no PR
+            const currentLabelsResponse = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pull_number
+            });
+            const currentLabels = currentLabelsResponse.data.map(l => l.name);
+            console.log("Current labels: " + JSON.stringify(currentLabels));
+
+            // Define as labels que queremos remover se não mais atendidas
+            const removableLabels = ["Critic", "Breaking Changes", "QA validated"];
+            for (const label of removableLabels) {
+              if (currentLabels.includes(label) && !labelsToAdd.includes(label)) {
+                console.log(`Removendo label: ${label}`);
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: pull_number,
+                    name: label
+                  });
+                } catch (error) {
+                  console.log(`Falha ao remover label ${label}: ${error.message}`);
+                }
+              }
+            }

@@ -13,3 +13,7 @@
 - - Removido prioridade critica - Removeu flag Critic
 - - Adicionado NÂO em testado por QA - Nada fez
 - - Adicionado SIM em testado por QA - Adicionou a label QA Validated
+
+
+# Para a criação de pull no auto
+- Habilitar: https://github.com/dilneiss/gitflow-staging/settings/actions

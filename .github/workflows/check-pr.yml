@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          
+
       - name: Atualizar título do PR para master
         if: github.event.pull_request.base.ref == 'master'
         uses: actions/github-script@v6
@@ -48,7 +48,7 @@ jobs:
               pull_number: pull_number,
               title: newTitle
             });
-
+      
       # Detecta se o evento é "edited"
       - name: Verificar se é edição do corpo do PR
         id: check_event

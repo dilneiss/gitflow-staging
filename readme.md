@@ -3,4 +3,5 @@
 - Para mostrar que falhou nos testes automatizados FAKE, não enviar nenhuma migration ou alterar.
 
 # Testes realizados
-- Teste limpo, sem migration, terá testes falhado
+- Teste limpo, sem migration, terá testes falhado - ok
+- - "Corrigido", foi adicionado algo em migration -  

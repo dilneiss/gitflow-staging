@@ -319,7 +319,7 @@ jobs:
             // Obter o autor do PR
             const prAuthor = pr.user.login;
 
-            // Remove o autor da lista, para evitar que seja escolhido
+            // Remove o autor da lista de revisores para evitar que ele seja escolhido como revisor
             const filteredReviewers = reviewersList.filter(rev => rev !== prAuthor);
 
             // Se a lista ficar vazia, não faz nada
@@ -340,11 +340,12 @@ jobs:
               reviewers: [selectedReviewer]
             });
 
-            // Atribui o revisor como responsável (assignee)
+            // Atribui tanto o revisor selecionado quanto o autor do PR como responsáveis (assignees)
             await github.rest.issues.addAssignees({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pull_number,
-              assignees: [selectedReviewer]
+              assignees: [selectedReviewer, prAuthor]
             });
+      
       

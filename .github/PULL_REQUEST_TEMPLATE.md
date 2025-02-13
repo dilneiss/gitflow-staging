@@ -1,4 +1,4 @@
-## Formulário de GMUD
+## Formulário de GMUD - Preencha somente o item 2 se aplicável
 
 **1. Essa mudança pode quebrar o sistema?**
 - [ ] Sim
@@ -15,12 +15,12 @@
 - [ ] Sim
 - [ ] Não
 
-**5. A mudança foi aprovada pelos devs responsáveis pelo PR?**
-<!-- APPROVAL_PLACEHOLDER -->
-
-**6. A mudança foi homologada por QA?**
+**5. A mudança foi homologada por QA?**
 - [ ] Sim
 - [ ] Não
+
+**6. A mudança foi aprovada pelos devs responsáveis pelo PR?**
+<!-- APPROVAL_PLACEHOLDER -->
 
 **7. Essa mudança terá alterações no banco de dados?**
 <!-- MIGRATIONS_PLACEHOLDER -->

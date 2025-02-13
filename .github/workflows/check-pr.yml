@@ -55,7 +55,7 @@ jobs:
             let currentBody = context.payload.pull_request.body || "";
 
             // Atualiza a seção de migrations
-            const migrationText = `Essa mudança terá alterações no banco de dados? **${process.env.MIGRATIONS === 'true' ? 'SIM' : 'NÃO'}**`;
+            const migrationText = `**${process.env.MIGRATIONS === 'true' ? 'SIM' : 'NÃO'}**`;
             if (currentBody.includes("<!-- MIGRATIONS_PLACEHOLDER -->")) {
               currentBody = currentBody.replace("<!-- MIGRATIONS_PLACEHOLDER -->", migrationText);
             } else {
@@ -63,7 +63,7 @@ jobs:
             }
 
             // Atualiza a seção de aprovação
-            const approvalText = `A mudança foi aprovada pelos devs responsáveis pelo PR? **${process.env.APROVACAO}**`;
+            const approvalText = `**${process.env.APROVACAO}**`;
             if (currentBody.includes("<!-- APPROVAL_PLACEHOLDER -->")) {
               currentBody = currentBody.replace("<!-- APPROVAL_PLACEHOLDER -->", approvalText);
             } else {

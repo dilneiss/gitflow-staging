@@ -37,7 +37,7 @@ jobs:
           script: |
             const pull_number = context.payload.pull_request.number;
             let currentBody = context.payload.pull_request.body || "";
-
+            
             const now = new Date();
             const nowFormatted = now.toLocaleString('pt-BR', {
               timeZone: 'America/Sao_Paulo',
@@ -49,18 +49,18 @@ jobs:
               second: '2-digit',
               hour12: false
             });
-
+            
             const migrationText = `**${process.env.MIGRATIONS === 'true' ? 'SIM' : 'NÃO'}** - ${nowFormatted}`;
             if (currentBody.includes("<!-- MIGRATIONS_PLACEHOLDER -->")) {
               currentBody = currentBody.replace("<!-- MIGRATIONS_PLACEHOLDER -->", migrationText);
             } else {
+              // Se o placeholder não existir, insere a mensagem ao final do corpo
               currentBody += "\n\n" + migrationText;
             }
-
+            
             await github.rest.pulls.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pull_number,
               body: currentBody
             });
-      

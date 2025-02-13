@@ -18,21 +18,19 @@ jobs:
       - name: Criar PR para develop
         id: create_pr
         uses: actions/github-script@v6
-        env:
-          # Use o seu PAT configurado em secrets (substitua PAT_TOKEN pelo nome que você configurou)
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
           script: |
             const originalPR = context.payload.pull_request;
             console.log("PR original #" + originalPR.number);
-            // Cria o PR para a branch "develop"
+            // Cria o PR para develop usando o mesmo head branch,
+            // definindo o corpo como apenas o link para o PR da main
             const newPR = await github.rest.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: originalPR.title,
               head: originalPR.head.ref,
               base: "develop",
-              body: `Pull Request para Main: ${originalPR.html_url}\n\n` + (originalPR.body || "")
+              body: `Pull Request para Main: ${originalPR.html_url}`
             });
             core.setOutput("newPRUrl", newPR.data.html_url);
             core.setOutput("newPRNumber", newPR.data.number.toString());
@@ -41,8 +39,6 @@ jobs:
 
       - name: Comentar no PR original com link do PR para develop
         uses: actions/github-script@v6
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
           script: |
             const originalPR = context.payload.pull_request;
@@ -56,25 +52,17 @@ jobs:
             });
             console.log("Comentário criado no PR original.");
 
-      - name: Atualizar corpo do PR para develop com link do PR original
+      - name: Atualizar corpo do PR para develop (garantir que contém só o link)
         uses: actions/github-script@v6
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
           script: |
             const newPRNumber = parseInt('${{ steps.create_pr.outputs.newPRNumber }}', 10);
             const originalPRUrl = '${{ steps.create_pr.outputs.originalPRUrl }}';
-            const newPRResponse = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: newPRNumber
-            });
-            let newBody = newPRResponse.data.body || "";
-            newBody = `Pull Request para Main: ${originalPRUrl}\n\n` + newBody;
+            const newBody = `Pull Request para Main: ${originalPRUrl}`;
             await github.rest.pulls.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: newPRNumber,
               body: newBody
             });
-            console.log("Corpo do PR para develop atualizado.");
+            console.log("Corpo do PR para develop atualizado para conter somente o link.");

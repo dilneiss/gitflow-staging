@@ -268,21 +268,34 @@ jobs:
             }
 
       # Se os testes passaram, solicita automaticamente o revisor "dilneiss"
-      - name: Solicitar aprovação automática
+      - name: Solicitar aprovação automática e atribuição
         if: steps.check_tests.outputs.testResult == 'passed'
         uses: actions/github-script@v6
         with:
           script: |
-            // Lista de revisores possíveis
-            const reviewersList = ["dilneiss", "dilneiss"];
-            // Seleciona um aleatoriamente
-            const selectedReviewer = reviewersList[Math.floor(Math.random() * reviewersList.length)];
             const pull_number = context.payload.pull_request.number;
+            const pr = context.payload.pull_request;
+            // Verifica se já há algum revisor designado
+            if (pr.requested_reviewers && pr.requested_reviewers.length > 0) {
+              console.log("Já existe um revisor designado. Nenhuma ação tomada.");
+              return;
+            }
+            // Define a lista de revisores possíveis
+            const reviewersList = ["dilneiss", "dilneiss", "dilneiss"];
+            // Seleciona aleatoriamente um revisor
+            const selectedReviewer = reviewersList[Math.floor(Math.random() * reviewersList.length)];
             console.log(`Revisor selecionado: ${selectedReviewer}`);
+            // Solicita o revisor selecionado
             await github.rest.pulls.requestReviewers({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pull_number,
               reviewers: [selectedReviewer]
             });
-
+            // Atribui o revisor como responsável (assignee)
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pull_number,
+              assignees: [selectedReviewer]
+            });

@@ -358,10 +358,10 @@
     <div class="branch-column">
       <div class="branch-header">Develop</div>
       <div class="action-buttons">
+        <button @click="createFeatureBranch" class="warning">⚙️ Criar Feature</button>
         <button @click="autoTest" class="success">🧪 Testes Automatizados</button>
         <button @click="qaTestFeature" class="success">🧪 QA Testar</button>
         <button @click="createRelease" class="warning">🚀 Criar Release</button>
-        <button @click="createFeatureBranch" class="warning">⚙️ Criar Feature</button>
       </div>
       <div class="commit-list">
         <div
@@ -454,8 +454,10 @@
         if (idx > 0) {
           const fromId = list[idx - 1].id;
           this.lines.push({
-            fromBranch: branchName, fromId,
-            toBranch: branchName, toId: newCommit.id,
+            fromBranch: branchName,
+            fromId,
+            toBranch: branchName,
+            toId: newCommit.id,
             x1: 0, y1: 0, x2: 0, y2: 0,
             isNew: true
           });
@@ -467,7 +469,6 @@
         });
         return newCommit;
       },
-
       createCommitForFeature(branch, logIt = true) {
         const idx = branch.commits.length;
         const newCommit = {
@@ -478,8 +479,10 @@
         branch.commits.push(newCommit);
         if (idx > 0) {
           this.lines.push({
-            fromBranch: branch.name, fromId: branch.commits[idx - 1].id,
-            toBranch: branch.name, toId: newCommit.id,
+            fromBranch: branch.name,
+            fromId: branch.commits[idx - 1].id,
+            toBranch: branch.name,
+            toId: newCommit.id,
             x1: 0, y1: 0, x2: 0, y2: 0,
             isNew: true
           });
@@ -491,15 +494,13 @@
         });
         return newCommit;
       },
-
       animateCommit(commitId) {
         const commitEl = document.querySelector(`[data-commit-id="${commitId}"]`);
         if (commitEl) {
           commitEl.style.animation = 'pulse 0.5s ease';
-          setTimeout(() => commitEl.style.animation = '', 500);
+          setTimeout(() => { commitEl.style.animation = ''; }, 500);
         }
       },
-
       commitAction(branch) {
         this.actionCounter++;
         const newCommit = this.createCommit(branch, true);
@@ -507,12 +508,10 @@
           this.addLog(`🚩 Commit na FEATURE com Feature Flag`);
         }
       },
-
       commitFeature(featureBranch) {
         this.actionCounter++;
         this.createCommitForFeature(featureBranch, true);
       },
-
       createHotfix() {
         if (!this.showHotfix) {
           const lastMasterCommit = this.branchData.master[this.branchData.master.length - 1];
@@ -532,25 +531,25 @@
           this.addLog(`🚑 Criou a branch HOTFIX`);
         }
       },
-
       mergeStaging() {
         const stgList = this.branchData.staging;
         if (!stgList.length) return;
-        const lastStgCommit = this.branchData.staging[this.branchData.staging.length - 1];
+        const lastStgCommit = stgList[stgList.length - 1];
         if (!lastStgCommit) return;
-        this.version.minor++;
-        this.version.patch = 0;
-        const newMaster = this.createCommit('master', false);
-        const newDev = this.createCommit('develop', false);
-        this.lines.push(
-                { fromBranch: 'staging', fromId: lastStgCommit.id, toBranch: 'master', toId: newMaster.id, x1:0,y1:0,x2:0,y2:0, isNew: true },
-                { fromBranch: 'staging', fromId: lastStgCommit.id, toBranch: 'develop', toId: newDev.id, x1:0,y1:0,x2:0,y2:0, isNew: true }
-        );
-        this.actionCounter++;
-        this.addLog(`🔀 Merge STAGING -> MASTER & DEVELOP | Nova versão: ${this.getVersionString()}`);
-        this.$nextTick(() => this.updateLinePositions());
+        this.mergeApproval(() => {
+          this.version.minor++;
+          this.version.patch = 0;
+          const newMaster = this.createCommit('master', false);
+          const newDev = this.createCommit('develop', false);
+          this.lines.push(
+                  { fromBranch: 'staging', fromId: lastStgCommit.id, toBranch: 'master', toId: newMaster.id, x1: 0, y1: 0, x2: 0, y2: 0, isNew: true },
+                  { fromBranch: 'staging', fromId: lastStgCommit.id, toBranch: 'develop', toId: newDev.id, x1: 0, y1: 0, x2: 0, y2: 0, isNew: true }
+          );
+          this.actionCounter++;
+          this.addLog(`🔀 Merge STAGING -> MASTER & DEVELOP | Nova versão: ${this.getVersionString()}`);
+          this.$nextTick(() => { this.updateLinePositions(); });
+        });
       },
-
       createRelease() {
         if (!this.showRelease) {
           const lastDevelopCommit = this.branchData.develop[this.branchData.develop.length - 1];
@@ -570,87 +569,91 @@
           this.addLog(`🚀 Criou a branch RELEASE`);
         }
       },
-
-      createFeatureBranch() {
-        const lastDevelopCommit = this.branchData.develop[this.branchData.develop.length - 1];
-        const branchName = this.generateFeatureBranchName();
-        const newFeatureBranch = { name: branchName, commits: [] };
-        this.featureBranches.push(newFeatureBranch);
-        this.actionCounter++;
-        const newCommit = this.createCommitForFeature(newFeatureBranch, true);
-        if (lastDevelopCommit) {
-          this.lines.push({
-            fromBranch: 'develop',
-            fromId: lastDevelopCommit.id,
-            toBranch: branchName,
-            toId: newCommit.id,
-            x1: 0, y1: 0, x2: 0, y2: 0,
-            isNew: true
-          });
-        }
-        this.addLog(`⚙️ Criou a branch FEATURE ${branchName}`);
-      },
-
-      generateFeatureBranchName() {
-        const words = ["lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing", "elit"];
-        const word1 = words[Math.floor(Math.random() * words.length)];
-        const word2 = words[Math.floor(Math.random() * words.length)];
-        const branchName = `feature/CNL-${this.featureCounter}-${word1}-${word2}`;
-        this.featureCounter++;
-        return branchName;
-      },
-
       mergeRelease() {
         const relList = this.branchData.release;
         if (!relList.length) return;
         const lastRel = relList[relList.length - 1];
-        const newStaging = this.createCommit('staging', false);
-        const newDev = this.createCommit('develop', false);
-        this.lines.push(
-                { fromBranch: 'release', fromId: lastRel.id, toBranch: 'staging', toId: newStaging.id, x1:0,y1:0,x2:0,y2:0, isNew: true },
-                { fromBranch: 'release', fromId: lastRel.id, toBranch: 'develop', toId: newDev.id, x1:0,y1:0,x2:0,y2:0, isNew: true }
-        );
-        this.actionCounter++;
-        this.addLog(`🔀 Merge RELEASE -> STAGING & DEVELOP`);
-        this.$nextTick(() => this.updateLinePositions());
+        this.mergeApproval(() => {
+          const newStaging = this.createCommit('staging', false);
+          const newDev = this.createCommit('develop', false);
+          this.lines.push(
+                  { fromBranch: 'release', fromId: lastRel.id, toBranch: 'staging', toId: newStaging.id, x1: 0, y1: 0, x2: 0, y2: 0, isNew: true },
+                  { fromBranch: 'release', fromId: lastRel.id, toBranch: 'develop', toId: newDev.id, x1: 0, y1: 0, x2: 0, y2: 0, isNew: true }
+          );
+          this.actionCounter++;
+          this.addLog(`🔀 Merge RELEASE -> STAGING & DEVELOP`);
+          this.$nextTick(() => { this.updateLinePositions(); });
+        });
       },
-
+      mergeHotfix() {
+        const hfxList = this.branchData.hotfix;
+        if (!hfxList.length) return;
+        const lastHfx = hfxList[hfxList.length - 1];
+        if (!lastHfx) return;
+        this.mergeApproval(() => {
+          this.version.patch++;
+          const newMst = this.createCommit('master', false);
+          const newStg = this.createCommit('staging', false);
+          const newDev = this.createCommit('develop', false);
+          this.lines.push(
+                  { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'master', toId: newMst.id, x1: 0, y1: 0, x2: 0, y2: 0, isNew: true },
+                  { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'staging', toId: newStg.id, x1: 0, y1: 0, x2: 0, y2: 0, isNew: true },
+                  { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'develop', toId: newDev.id, x1: 0, y1: 0, x2: 0, y2: 0, isNew: true }
+          );
+          this.actionCounter++;
+          this.addLog(`🔀 Merge HOTFIX -> MASTER, STAGING & DEVELOP | Nova versão: ${this.getVersionString()}`);
+          this.$nextTick(() => { this.updateLinePositions(); });
+        });
+      },
+      mergeFeatureBranch(featureBranch) {
+        const featList = featureBranch.commits;
+        if (!featList.length) return;
+        const lastFeat = featList[featList.length - 1];
+        this.mergeApproval(() => {
+          const newDev = this.createCommit('develop', false);
+          this.lines.push({
+            fromBranch: featureBranch.name,
+            fromId: lastFeat.id,
+            toBranch: 'develop',
+            toId: newDev.id,
+            x1: 0, y1: 0, x2: 0, y2: 0,
+            isNew: true
+          });
+          this.actionCounter++;
+          this.addLog(`🔀 Merge FEATURE ${featureBranch.name} -> DEVELOP`);
+          this.$nextTick(() => { this.updateLinePositions(); });
+        });
+      },
       testFeatureBranch(featureBranch) {
         this.actionCounter++;
         this.addLog(`🧪 TESTE AUTOMATIZADO em FEATURE ${featureBranch.name} no servidor`);
         this.showTestEffect(featureBranch.name, 'automated');
       },
-
       autoTest() {
         this.actionCounter++;
         this.addLog(`🧪 TESTE AUTOMATIZADO em DESENVOLVIMENTO`, 'automated-test');
         this.showTestEffect('develop', 'automated');
       },
-
       autoTestHotfix() {
         this.actionCounter++;
         this.addLog(`🧪 TESTE AUTOMATIZADO em HOTFIX no próprio computador`, 'automated-test');
         this.showTestEffect('hotfix', 'automated');
       },
-
       autoTestStaging() {
         this.actionCounter++;
         this.addLog(`🧪 TESTE AUTOMATIZADO em STAGING`, 'automated-test');
         this.showTestEffect('staging', 'automated');
       },
-
       qaTestFeature() {
         this.actionCounter++;
         this.addLog(`📋 TESTE MANUAL QA em DESENVOLVIMENTO`, 'qa-test');
         this.showTestEffect('develop', 'qa');
       },
-
       qaTestStaging() {
         this.actionCounter++;
         this.addLog(`📋 TESTE MANUAL QA em STAGING`, 'qa-test');
         this.showTestEffect('staging', 'qa');
       },
-
       showTestEffect(branch, testType) {
         const branchColumn = [...document.querySelectorAll('.branch-header')]
                 .find(el => el.textContent.toLowerCase().includes(branch.toLowerCase()))
@@ -669,42 +672,6 @@
           }, 2000);
         }
       },
-
-      mergeFeatureBranch(featureBranch) {
-        const featList = featureBranch.commits;
-        if (!featList.length) return;
-        const lastFeat = featList[featList.length - 1];
-        const newDev = this.createCommit('develop', false);
-        this.lines.push({
-          fromBranch: featureBranch.name, fromId: lastFeat.id,
-          toBranch: 'develop', toId: newDev.id,
-          x1: 0, y1: 0, x2: 0, y2: 0,
-          isNew: true
-        });
-        this.actionCounter++;
-        this.addLog(`🔀 Merge FEATURE ${featureBranch.name} -> DEVELOP`);
-        this.$nextTick(() => this.updateLinePositions());
-      },
-
-      mergeHotfix() {
-        const hfxList = this.branchData.hotfix;
-        if (!hfxList.length) return;
-        const lastHfx = this.branchData.hotfix[this.branchData.hotfix.length - 1];
-        if (!lastHfx) return;
-        this.version.patch++;
-        const newMst = this.createCommit('master', false);
-        const newStg = this.createCommit('staging', false);
-        const newDev = this.createCommit('develop', false);
-        this.lines.push(
-                { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'master', toId: newMst.id, x1:0,y1:0,x2:0,y2:0, isNew: true },
-                { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'staging', toId: newStg.id, x1:0,y1:0,x2:0,y2:0, isNew: true },
-                { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'develop', toId: newDev.id, x1:0,y1:0,x2:0,y2:0, isNew: true }
-        );
-        this.actionCounter++;
-        this.addLog(`🔀 Merge HOTFIX -> MASTER, STAGING & DEVELOP | Nova versão: ${this.getVersionString()}`);
-        this.$nextTick(() => this.updateLinePositions());
-      },
-
       deleteBranch(branchName) {
         if (['hotfix', 'release'].includes(branchName)) {
           this[`show${branchName.charAt(0).toUpperCase() + branchName.slice(1)}`] = false;
@@ -712,10 +679,9 @@
           this.removeLinesFromBranch(branchName);
           this.actionCounter++;
           this.addLog(`🗑️ Excluiu a branch ${branchName.toUpperCase()}`);
-          this.$nextTick(() => this.updateLinePositions());
+          this.$nextTick(() => { this.updateLinePositions(); });
         }
       },
-
       deleteFeatureBranch(featureBranch) {
         const index = this.featureBranches.findIndex(b => b.name === featureBranch.name);
         if (index !== -1) {
@@ -723,16 +689,14 @@
           this.removeLinesFromBranch(featureBranch.name);
           this.actionCounter++;
           this.addLog(`🗑️ Excluiu a branch ${featureBranch.name}`);
-          this.$nextTick(() => this.updateLinePositions());
+          this.$nextTick(() => { this.updateLinePositions(); });
         }
       },
-
       removeLinesFromBranch(branchName) {
         this.lines = this.lines.filter(line =>
                 line.fromBranch !== branchName && line.toBranch !== branchName
         );
       },
-
       updateLinePositions() {
         if (!this.$refs.container) return;
         const containerRect = this.$refs.container.getBoundingClientRect();
@@ -746,22 +710,21 @@
           if (fromEl && toEl) {
             const fromRect = fromEl.getBoundingClientRect();
             const toRect = toEl.getBoundingClientRect();
-            line.x1 = fromRect.left - containerRect.left + fromRect.width/2;
-            line.y1 = fromRect.top - containerRect.top + fromRect.height/2;
-            line.x2 = toRect.left - containerRect.left + toRect.width/2;
-            line.y2 = toRect.top - containerRect.top + toRect.height/2;
+            line.x1 = fromRect.left - containerRect.left + fromRect.width / 2;
+            line.y1 = fromRect.top - containerRect.top + fromRect.height / 2;
+            line.x2 = toRect.left - containerRect.left + toRect.width / 2;
+            line.y2 = toRect.top - containerRect.top + toRect.height / 2;
           }
         });
+        // Reassign to trigger reactivity
         this.lines = [...this.lines];
         this.markLineAsOld();
       },
-
       markLineAsOld() {
         setTimeout(() => {
           this.lines = this.lines.map(line => ({ ...line, isNew: false }));
         }, 3100);
       },
-
       addLog(msg, type = '') {
         this.logs.unshift({
           timestamp: new Date().toLocaleTimeString(),
@@ -784,6 +747,48 @@
             colors: ['#eab308']
           });
         }
+      },
+      mergeApproval(callback) {
+        const seniors = ["Dilnei", "André", "Pedro Henrique", "Arthur", "Augusto"];
+        const juniors = ["Marcos", "Fabio", "Gabriel", "Gustavo F", "Gustavo K", "Milena"];
+        const selectedSenior = seniors[Math.floor(Math.random() * seniors.length)];
+        const selectedJunior = juniors[Math.floor(Math.random() * juniors.length)];
+        const approved = confirm(
+                `Aprovação de DEV:\nSenior: ${selectedSenior}\nAcompanhamento: ${selectedJunior}\nAprovado?`
+        );
+        if (approved) {
+          this.addLog("PR Aprovado pelos devs designados");
+          callback();
+        } else {
+          this.addLog("Reenvia para o Dev responsável corrigir");
+        }
+      },
+      createFeatureBranch() {
+        const lastDevelopCommit = this.branchData.develop[this.branchData.develop.length - 1];
+        const branchName = this.generateFeatureBranchName();
+        const newFeatureBranch = { name: branchName, commits: [] };
+        this.featureBranches.push(newFeatureBranch);
+        this.actionCounter++;
+        const newCommit = this.createCommitForFeature(newFeatureBranch, true);
+        if (lastDevelopCommit) {
+          this.lines.push({
+            fromBranch: 'develop',
+            fromId: lastDevelopCommit.id,
+            toBranch: branchName,
+            toId: newCommit.id,
+            x1: 0, y1: 0, x2: 0, y2: 0,
+            isNew: true
+          });
+        }
+        this.addLog(`⚙️ Criou a branch FEATURE ${branchName}`);
+      },
+      generateFeatureBranchName() {
+        const words = ["lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing", "elit"];
+        const word1 = words[Math.floor(Math.random() * words.length)];
+        const word2 = words[Math.floor(Math.random() * words.length)];
+        const branchName = `feature/CNL-${this.featureCounter}-${word1}-${word2}`;
+        this.featureCounter++;
+        return branchName;
       }
     }
   });

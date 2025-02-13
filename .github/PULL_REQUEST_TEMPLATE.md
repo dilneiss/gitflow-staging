@@ -19,8 +19,5 @@
 - [ ] Sim
 - [ ] Não
 
-**6. A mudança foi aprovada pelos devs responsáveis pelo PR?**
-<!-- APPROVAL_PLACEHOLDER -->
-
-**7. Essa mudança terá alterações no banco de dados?**
+**6. Essa mudança terá alterações no banco de dados?**
 <!-- MIGRATIONS_PLACEHOLDER -->

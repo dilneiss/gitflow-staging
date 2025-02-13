@@ -30,20 +30,6 @@ jobs:
             echo "::set-output name=has_migrations::false"
           fi
 
-      - name: Verificar aprovações
-        id: check_approvals
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const pull_number = context.payload.pull_request.number;
-            const reviews = await github.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pull_number
-            });
-            const approved = reviews.data.some(r => r.state === "APPROVED");
-            core.setOutput("aprovacao", approved ? "SIM" : "NÃO");
-
       - name: Atualizar corpo do PR (formulário GMUD)
         uses: actions/github-script@v6
         env:
@@ -60,14 +46,6 @@ jobs:
               currentBody = currentBody.replace("<!-- MIGRATIONS_PLACEHOLDER -->", migrationText);
             } else {
               currentBody += "\n\n" + migrationText;
-            }
-
-            // Atualiza a seção de aprovação
-            const approvalText = `**${process.env.APROVACAO}**`;
-            if (currentBody.includes("<!-- APPROVAL_PLACEHOLDER -->")) {
-              currentBody = currentBody.replace("<!-- APPROVAL_PLACEHOLDER -->", approvalText);
-            } else {
-              currentBody += "\n\n" + approvalText;
             }
 
             await github.rest.pulls.update({

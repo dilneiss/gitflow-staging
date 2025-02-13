@@ -306,16 +306,32 @@ jobs:
           script: |
             const pull_number = context.payload.pull_request.number;
             const pr = context.payload.pull_request;
+
             // Verifica se já há algum revisor designado
             if (pr.requested_reviewers && pr.requested_reviewers.length > 0) {
               console.log("Já existe um revisor designado. Nenhuma ação tomada.");
               return;
             }
-            // Define a lista de revisores possíveis
-            const reviewersList = ["dilneiss", "dilneiss", "dilneiss"];
-            // Seleciona aleatoriamente um revisor
-            const selectedReviewer = reviewersList[Math.floor(Math.random() * reviewersList.length)];
+
+            // Lista de revisores possíveis
+            const reviewersList = ["dilneiss", "usuario2", "usuario3"];
+
+            // Obter o autor do PR
+            const prAuthor = pr.user.login;
+
+            // Remove o autor da lista, para evitar que seja escolhido
+            const filteredReviewers = reviewersList.filter(rev => rev !== prAuthor);
+
+            // Se a lista ficar vazia, não faz nada
+            if (filteredReviewers.length === 0) {
+              console.log("Não há revisores disponíveis que não sejam o autor do PR.");
+              return;
+            }
+
+            // Seleciona aleatoriamente um revisor da lista filtrada
+            const selectedReviewer = filteredReviewers[Math.floor(Math.random() * filteredReviewers.length)];
             console.log(`Revisor selecionado: ${selectedReviewer}`);
+
             // Solicita o revisor selecionado
             await github.rest.pulls.requestReviewers({
               owner: context.repo.owner,
@@ -323,6 +339,7 @@ jobs:
               pull_number: pull_number,
               reviewers: [selectedReviewer]
             });
+
             // Atribui o revisor como responsável (assignee)
             await github.rest.issues.addAssignees({
               owner: context.repo.owner,
@@ -330,3 +347,4 @@ jobs:
               issue_number: pull_number,
               assignees: [selectedReviewer]
             });
+      

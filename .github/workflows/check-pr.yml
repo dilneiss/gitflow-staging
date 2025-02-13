@@ -3,7 +3,7 @@ name: Atualizar PR (Formulário GMUD)
 on:
   pull_request:
     branches: [ "main" ]
-    types: [opened, reopened, synchronize]
+    types: [opened, reopened, synchronize, edited]
 
 permissions:
   contents: write
@@ -18,9 +18,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      # 1) Verifica se há migrations
+      # Passo para detectar se a ação atual é "edited"
+      - name: Verificar se é edição do corpo do PR
+        id: check_event
+        run: |
+          echo "action=${{ github.event.action }}"
+          if [ "${{ github.event.action }}" = "edited" ]; then
+            echo "::set-output name=edited::true"
+          else
+            echo "::set-output name=edited::false"
+          fi
+
+      # 1) Verifica alterações de migrations (somente se NÃO for edited)
       - name: Verificar alterações de migrations
         id: check_migrations
+        if: steps.check_event.outputs.edited == 'false'
         run: |
           git fetch origin main
           CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
@@ -30,8 +42,9 @@ jobs:
             echo "::set-output name=has_migrations::false"
           fi
 
-      # 2) Atualiza o placeholder no corpo do PR (MIGRATIONS_PLACEHOLDER)
+      # 2) Atualiza o placeholder no corpo do PR (somente se NÃO for edited)
       - name: Atualizar corpo do PR (Formulário GMUD)
+        if: steps.check_event.outputs.edited == 'false'
         uses: actions/github-script@v6
         env:
           MIGRATIONS: ${{ steps.check_migrations.outputs.has_migrations }}
@@ -66,21 +79,27 @@ jobs:
               body: currentBody
             });
 
-      # 3) Aplica labels de acordo com o corpo do PR
+      # 3) Aplica labels (roda sempre, inclusive em "edited")
       - name: Aplicar labels
+        if: always()
         uses: actions/github-script@v6
-        env:
-          MIGRATIONS: ${{ steps.check_migrations.outputs.has_migrations }}
         with:
           script: |
             const pull_number = context.payload.pull_request.number;
             const prBody = context.payload.pull_request.body || "";
+            const edited = context.payload.action === "edited";
 
-            // Vamos definir um array de labels a serem aplicadas
+            // Se não for 'edited', podemos ler a saída do step check_migrations
+            // Se for 'edited', vamos considerar migrations = false (para não mudar nada)
+            let hasMigrations = false;
+            if (!edited) {
+              hasMigrations = '${{ steps.check_migrations.outputs.has_migrations }}' === 'true';
+            }
+
             let labelsToAdd = [];
 
             // Se tiver migrations => label "Migration" (verde)
-            if (process.env.MIGRATIONS === "true") {
+            if (hasMigrations) {
               labelsToAdd.push("Migration");
             }
 
@@ -109,7 +128,6 @@ jobs:
               labelsToAdd.push("QA validated");
             }
 
-            // Se não há labels, não faz nada
             if (labelsToAdd.length === 0) {
               console.log("Nenhuma label para adicionar.");
               return;
@@ -117,11 +135,11 @@ jobs:
 
             // Definir cores das labels
             const labelConfigs = {
-              "Migration": "0E8A16",         // verde
-              "Breaking Changes": "5319E7",  // roxo
-              "Critic": "FF0000",            // vermelho
-              "Normal": "1D76DB",            // azul
-              "QA validated": "0E8A16"       // verde
+              "Migration": "0E8A16",
+              "Breaking Changes": "5319E7",
+              "Critic": "FF0000",
+              "Normal": "1D76DB",
+              "QA validated": "0E8A16"
             };
 
             // 1) Verifica se cada label existe; se não existir, cria com a cor configurada

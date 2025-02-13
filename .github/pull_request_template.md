@@ -1,4 +1,4 @@
-## Formulário de GMUD - Preencha somente o item 2 se aplicável
+## Formulário de GMUD
 
 **1. Essa mudança pode quebrar o sistema?**
 - [ ] Sim
@@ -11,13 +11,9 @@
 - [ ] N/A
 - [ ] Normal
 
-**4. A mudança passou pelos testes automatizados?**
+**4. A mudança foi homologada por QA?**
 - [ ] Sim
 - [ ] Não
 
-**5. A mudança foi homologada por QA?**
-- [ ] Sim
-- [ ] Não
-
-**6. Essa mudança terá alterações no banco de dados?**
+**5. Essa mudança terá alterações no banco de dados?**
 <!-- MIGRATIONS_PLACEHOLDER -->

@@ -18,6 +18,7 @@ jobs:
         with:
           fetch-depth: 0
 
+      # 1) Verifica se há migrations
       - name: Verificar alterações de migrations
         id: check_migrations
         run: |
@@ -29,7 +30,8 @@ jobs:
             echo "::set-output name=has_migrations::false"
           fi
 
-      - name: Atualizar corpo do PR (formulário GMUD)
+      # 2) Atualiza o placeholder no corpo do PR (MIGRATIONS_PLACEHOLDER)
+      - name: Atualizar corpo do PR (Formulário GMUD)
         uses: actions/github-script@v6
         env:
           MIGRATIONS: ${{ steps.check_migrations.outputs.has_migrations }}
@@ -62,4 +64,100 @@ jobs:
               repo: context.repo.repo,
               pull_number: pull_number,
               body: currentBody
+            });
+
+      # 3) Aplica labels de acordo com o corpo do PR
+      - name: Aplicar labels
+        uses: actions/github-script@v6
+        env:
+          MIGRATIONS: ${{ steps.check_migrations.outputs.has_migrations }}
+        with:
+          script: |
+            const pull_number = context.payload.pull_request.number;
+            const prBody = context.payload.pull_request.body || "";
+
+            // Vamos definir um array de labels a serem aplicadas
+            let labelsToAdd = [];
+
+            // Se tiver migrations => label "Migration" (verde)
+            if (process.env.MIGRATIONS === "true") {
+              labelsToAdd.push("Migration");
+            }
+
+            // Se "pode quebrar" => label "Breaking Changes" (roxo)
+            // Procura por '- [x] Sim' no item 1
+            const breakRegex = /\*\*1\. Essa mudança pode quebrar o sistema\?\*\*\s*- \[[xX]\]\s+Sim/;
+            if (breakRegex.test(prBody)) {
+              labelsToAdd.push("Breaking Changes");
+            }
+
+            // Se prioridade for "Crítica" => label "Critic" (vermelho)
+            const criticRegex = /\*\*3\. Classifique a prioridade dessa mudança:\*\*\s*- \[[xX]\]\s+Crítica/;
+            if (criticRegex.test(prBody)) {
+              labelsToAdd.push("Critic");
+            }
+
+            // Se prioridade for "Normal" => label "Normal" (azul)
+            const normalRegex = /\*\*3\. Classifique a prioridade dessa mudança:\*\*\s*- \[[xX]\]\s+Normal/;
+            if (normalRegex.test(prBody)) {
+              labelsToAdd.push("Normal");
+            }
+
+            // Se "A mudança foi homologada por QA?" => label "QA validated" (verde)
+            const qaRegex = /\*\*4\. A mudança foi homologada por QA\?\*\*\s*- \[[xX]\]\s+Sim/;
+            if (qaRegex.test(prBody)) {
+              labelsToAdd.push("QA validated");
+            }
+
+            // Se não há labels, não faz nada
+            if (labelsToAdd.length === 0) {
+              console.log("Nenhuma label para adicionar.");
+              return;
+            }
+
+            // Definir cores das labels
+            const labelConfigs = {
+              "Migration": "0E8A16",         // verde
+              "Breaking Changes": "5319E7",  // roxo
+              "Critic": "FF0000",            // vermelho
+              "Normal": "1D76DB",            // azul
+              "QA validated": "0E8A16"       // verde
+            };
+
+            // 1) Verifica se cada label existe; se não existir, cria com a cor configurada
+            for (const label of labelsToAdd) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label
+                });
+                // Se existe, atualiza a cor (caso queira garantir)
+                await github.rest.issues.updateLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  current_name: label,
+                  color: labelConfigs[label]
+                });
+              } catch (error) {
+                if (error.status === 404) {
+                  // Cria a label
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: label,
+                    color: labelConfigs[label]
+                  });
+                } else {
+                  throw error;
+                }
+              }
+            }
+
+            // 2) Adiciona as labels ao PR
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pull_number,
+              labels: labelsToAdd
             });

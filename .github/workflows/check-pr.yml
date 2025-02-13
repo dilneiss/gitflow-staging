@@ -148,12 +148,16 @@ jobs:
               await ensureLabel(label);
             }
             // Adiciona as labels ao PR
-            await github.rest.issues.addLabels({
+            if (labelsToAdd.length > 0) {
+              await github.rest.issues.addLabels({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pull_number,
               labels: labelsToAdd
             });
+            } else {
+              console.log("Nenhuma label para adicionar.");
+            }
             // Lista as labels atualmente aplicadas no PR
             const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
               owner: context.repo.owner,

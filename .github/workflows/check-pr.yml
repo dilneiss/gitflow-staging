@@ -314,7 +314,7 @@ jobs:
             }
 
             // Lista de revisores possíveis
-            const reviewersList = ["dilneiss", "usuario2", "usuario3"];
+            const reviewersList = ["dilneiss", "dilneiconectala", "dilneiconectala"];
 
             // Obter o autor do PR
             const prAuthor = pr.user.login;

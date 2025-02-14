@@ -57,7 +57,7 @@
                 transform: scale(1);
             }
             50% {
-                transform: scale(1.1);
+                transform: scale(1.02);
             }
             100% {
                 transform: scale(1);
@@ -350,57 +350,135 @@
             }
         }
 
-        servers-container {
+        /* Novos estilos para os servidores */
+        .servers-container {
             display: flex;
-            gap: 2rem;
+            gap: 1.5rem;
             justify-content: center;
-            padding: 2rem;
-            background: var(--surface);
-            margin: 2rem;
+            padding: 1.5rem;
+            margin: 2rem auto;
+            max-width: 1200px;
             border-radius: 1rem;
+            background: linear-gradient(45deg, var(--surface), #2d3748);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
 
         .server-box {
-            background: var(--background);
+            flex: 1;
+            background: linear-gradient(145deg, var(--background), #1a2333);
             padding: 1.5rem;
-            border-radius: 1rem;
-            min-width: 300px;
+            border-radius: 0.75rem;
+            min-width: 280px;
+            max-width: 320px;
             text-align: center;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .server-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px -5px rgba(0,0,0,0.2);
         }
 
         .server-title {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             margin-bottom: 1rem;
             color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .server-title::before {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
         }
 
         .server-version {
-            font-size: 2rem;
+            font-size: 1.75rem;
             margin: 1rem 0;
-            font-weight: bold;
+            font-weight: 600;
+            font-family: monospace;
+            color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            display: inline-block;
         }
 
         .deploy-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+            display: grid;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .server-box button {
+            width: 100%;
+            justify-content: center;
+            padding: 0.75rem;
+            font-size: 0.95rem;
         }
 
         .test-status {
             margin-top: 1rem;
-            padding: 0.5rem;
+            padding: 0.75rem;
             border-radius: 0.5rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
         }
 
-        .approved {
-            background: var(--success);
-            color: white;
+        .test-status.approved {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid var(--success);
+            color: var(--success);
         }
 
-        .pending {
-            background: var(--warning);
-            color: white;
+        .test-status.pending {
+            background: rgba(234, 179, 8, 0.15);
+            border: 1px solid var(--warning);
+            color: var(--warning);
+        }
+
+        .version-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--surface);
+            padding: 0.25rem 0.75rem;
+            border-radius: 0 0.75rem 0 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text);
+        }
+
+        @media (max-width: 768px) {
+            .servers-container {
+                flex-direction: column;
+                padding: 1rem;
+                margin: 1rem;
+            }
+
+            .server-box {
+                max-width: 100%;
+            }
+
+            .server-version {
+                font-size: 1.5rem;
+            }
+        }
+        .pulse-button {
+            animation: pulse 2s infinite;
         }
     </style>
 </head>
@@ -408,29 +486,46 @@
 <div id="app">
     <div class="servers-container">
         <div class="server-box">
-            <div class="server-title">Produção Geral</div>
+            <div class="version-badge">PROD</div>
+            <div class="server-title">
+                <span>🏭 Produção Geral</span>
+            </div>
             <div class="server-version">{{ productionVersion }}</div>
             <div class="deploy-buttons">
-                <button @click="deployProduction" :disabled="!canDeployProduction" class="success">
+                <button @click="deployProduction"
+                        :disabled="!canDeployProduction"
+                        class="success"
+                        :class="{ 'pulse-button': canDeployProduction }">
                     🚀 Deploy para Produção
                 </button>
             </div>
         </div>
 
         <div class="server-box">
-            <div class="server-title">Early Adopters</div>
-            <div class="server-version">main@latest</div>
+            <div class="version-badge">BETA</div>
+            <div class="server-title">
+                <span>🚀 Early Adopters</span>
+            </div>
+            <div class="server-version">{{ earlyAdoptersVersion || 'latest' }}</div>
             <div class="deploy-buttons">
-                <button @click="deployEarlyAdopters" :disabled="!canDeployEarlyAdopters" class="warning">
-                    🔄 Atualizar Early Adopters
+                <button @click="deployEarlyAdopters"
+                        :disabled="!canDeployEarlyAdopters"
+                        class="warning">
+                    🔄 Atualizar Versão
                 </button>
-                <button @click="runAutomatedTests" :disabled="!testsEnabled" class="success">
-                    🧪 Rodar Testes Automatizados
+                <button @click="runAutomatedTests"
+                        :disabled="!testsEnabled"
+                        class="success">
+                    🧪 Testes Automatizados
                 </button>
-                <button @click="runQATests" :disabled="!testsEnabled" class="success">
-                    📋 Teste QA
+                <button @click="runQATests"
+                        :disabled="!testsEnabled"
+                        class="success">
+                    📋 Teste Manual QA
                 </button>
                 <div class="test-status" :class="approvalStatus">
+                    <span v-if="testsPassed">✅</span>
+                    <span v-if="qaApproved">📋</span>
                     {{ approvalMessage }}
                 </div>
             </div>

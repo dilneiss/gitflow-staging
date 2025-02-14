@@ -825,7 +825,7 @@
                 testsEnabled: false,
                 testsPassed: false,
                 qaApproved: false,
-                approvalMessage: '',
+                approvalMessage: 'Ambiente Atualizado',
             }
         },
         mounted() {
@@ -874,7 +874,7 @@
                 this.testsPassed = false;
                 this.qaApproved = false;
                 this.addLog(`🏁 Deploy para Produção (${this.productionVersion})`);
-                this.approvalMessage = '';
+                this.approvalMessage = 'Ambiente Atualizado';
                 confetti({ particleCount: 200, spread: 100 });
             },
             runAutomatedTests() {

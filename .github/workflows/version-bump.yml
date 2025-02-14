@@ -1,0 +1,100 @@
+name: Version Bump on Merge to Main
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Determine version bump
+        id: version_bump
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const commits = context.payload.commits;
+            let featureDetected = false;
+            let hotfixDetected = false;
+            for (const commit of commits) {
+              const msg = commit.message.toLowerCase();
+              if (msg.includes("feature/")) {
+                featureDetected = true;
+              }
+              if (msg.includes("hotfix/")) {
+                hotfixDetected = true;
+              }
+            }
+            console.log("featureDetected:", featureDetected, "hotfixDetected:", hotfixDetected);
+            if (!featureDetected && !hotfixDetected) {
+              console.log("Nenhuma alteração de feature ou hotfix detectada. Encerrando.");
+              return;
+            }
+            const tags = await github.rest.repos.listTags({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            if (tags.data.length === 0) {
+              throw new Error("Nenhum tag encontrado no repositório.");
+            }
+            const latestTag = tags.data[0].name;
+            console.log("Último tag:", latestTag);
+            // Aceita tags com ou sem "v"
+            const semverRegex = /^v?(\d+)\.(\d+)\.(\d+)$/;
+            const match = latestTag.match(semverRegex);
+            if (!match) {
+              throw new Error("O último tag não segue o formato semver: " + latestTag);
+            }
+            const major = parseInt(match[1]);
+            const minor = parseInt(match[2]);
+            const patch = parseInt(match[3]);
+            let newVersion;
+            if (featureDetected) {
+              newVersion = `v${major}.${minor + 1}.0`;
+            } else if (hotfixDetected) {
+              newVersion = `v${major}.${minor}.${patch + 1}`;
+            }
+            console.log("Nova versão:", newVersion);
+            core.setOutput("new_version", newVersion);
+      
+      - name: Create new tag and release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const newVersion = '${{ steps.version_bump.outputs.new_version }}';
+            if (!newVersion) {
+              console.log("Nenhuma alteração de versão detectada. Encerrando.");
+              return;
+            }
+            // Usa o SHA do commit final do push
+            const sha = context.payload.after;
+            console.log("Criando tag", newVersion, "no commit", sha);
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${newVersion}`,
+              sha: sha
+            });
+            console.log("Tag criada com sucesso.");
+            // Cria um release para o novo tag
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: newVersion,
+              name: newVersion,
+              body: `Release ${newVersion} gerada a partir do merge na branch main.`,
+              draft: false,
+              prerelease: false
+            });
+            console.log("Release criada com sucesso.");

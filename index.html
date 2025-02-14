@@ -875,6 +875,7 @@
                 this.testsPassed = false;
                 this.qaApproved = false;
                 this.addLog(`🏁 Deploy para Produção (${this.productionVersion})`);
+                this.approvalMessage = '';
                 confetti({ particleCount: 200, spread: 100 });
             },
             runAutomatedTests() {

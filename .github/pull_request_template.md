@@ -12,6 +12,3 @@
 **4. A mudança foi homologada por QA?**
 - [ ] Sim
 - [ ] Não
-
-**5. Essa mudança terá alterações no banco de dados?**
-<!-- MIGRATIONS_PLACEHOLDER -->

@@ -188,8 +188,11 @@
             position: absolute;
             top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
-            z-index: 999;
+            z-index: 1; /* Ajustar z-index */
+            overflow: visible;
         }
 
         .log-container {
@@ -480,58 +483,115 @@
         .pulse-button {
             animation: pulse 2s infinite;
         }
+        /* Layout Principal */
+        .main-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(45deg, var(--background), #1a2333); /* Garantir fundo */
+        }
+
+        /* Topo - Servidores */
+        .servers-top {
+            padding: 1rem;
+            background: linear-gradient(45deg, var(--surface), #2d3748);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            z-index: 2;
+        }
+
+        /* Corpo Principal */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Painel Esquerdo - Branches */
+        .branches-panel {
+            flex: 0 0 70%;
+            display: flex;
+            flex-direction: column;
+            overflow-x: auto;
+            padding: 1rem;
+            background: linear-gradient(45deg, var(--background), #1a2333);
+        }
+
+        /* Painel Direito - Logs */
+        .logs-panel {
+            flex: 1;
+            background: var(--surface);
+            border-left: 2px solid rgba(255,255,255,0.1);
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        /* Ajustes nos Servidores */
+        .servers-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Ajustes nas Branches */
+        .branches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            padding: 1rem;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .branch-column {
+            min-height: 400px;
+        }
+
+        /* Ajustes nos Logs */
+        .log-container {
+            background: transparent;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            box-shadow: none;
+        }
+
+        .log-entry {
+            margin: 0.25rem 0;
+            padding: 0.75rem;
+        }
+
+        /* Melhorias na Responsividade */
+        @media (max-width: 1200px) {
+            .branches-panel {
+                flex: 0 0 60%;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .branches-panel {
+                flex: 2;
+                overflow-y: auto;
+            }
+
+            .logs-panel {
+                flex: 1;
+                border-left: none;
+                border-top: 2px solid rgba(255,255,255,0.1);
+            }
+        }
     </style>
 </head>
 <body>
 <div id="app">
-    <div class="servers-container">
-        <div class="server-box">
-            <div class="version-badge">PROD</div>
-            <div class="server-title">
-                <span>🏭 Produção Geral</span>
-            </div>
-            <div class="server-version">{{ productionVersion }}</div>
-            <div class="deploy-buttons">
-                <button @click="deployProduction"
-                        :disabled="!canDeployProduction"
-                        class="success"
-                        :class="{ 'pulse-button': canDeployProduction }">
-                    🚀 Deploy para Produção
-                </button>
-            </div>
-        </div>
-
-        <div class="server-box">
-            <div class="version-badge">BETA</div>
-            <div class="server-title">
-                <span>🚀 Early Adopters</span>
-            </div>
-            <div class="server-version">{{ earlyAdoptersVersion || 'latest' }}</div>
-            <div class="deploy-buttons">
-                <button @click="deployEarlyAdopters"
-                        :disabled="!canDeployEarlyAdopters"
-                        class="warning">
-                    🔄 Atualizar Versão
-                </button>
-                <button @click="runAutomatedTests"
-                        :disabled="!testsEnabled"
-                        class="success">
-                    🧪 Testes Automatizados
-                </button>
-                <button @click="runQATests"
-                        :disabled="!testsEnabled"
-                        class="success">
-                    📋 Teste Manual QA
-                </button>
-                <div class="test-status" :class="approvalStatus">
-                    <span v-if="testsPassed">✅</span>
-                    <span v-if="qaApproved">📋</span>
-                    {{ approvalMessage }}
-                </div>
-            </div>
-        </div>
-    </div>
-    <div ref="container" class="container">
+    <div class="main-container" ref="mainContainer">
         <svg class="svg-lines" :width="svgWidth" :height="svgHeight">
             <line
                     v-for="(line, index) in lines"
@@ -545,134 +605,175 @@
             />
         </svg>
 
-        <!-- Master Branch -->
-        <div class="branch-column">
-            <div class="branch-header">Master</div>
-            <div class="action-buttons">
-                <button @click="createHotfix" class="warning">🚑 Criar Hotfix</button>
-                <button @click="createRelease" class="warning">🚀 Criar Release</button>
-            </div>
-            <div class="commit-list">
-                <div v-for="(commit, idx) in branchData.master"
-                     :key="commit.id"
-                     class="commit-bubble"
-                     :class="{ latest: idx === branchData.master.length - 1 }"
-                     data-branch="master"
-                     :data-commit-id="commit.id">
-                    {{ commit.label }}
+        <!-- Topo com Servidores -->
+        <div class="servers-top">
+            <div class="servers-container">
+                <div class="server-box">
+                    <div class="version-badge">PROD</div>
+                    <div class="server-title">
+                        <span>🏭 Produção Geral</span>
+                    </div>
+                    <div class="server-version">{{ productionVersion }}</div>
+                    <div class="deploy-buttons">
+                        <button @click="deployProduction"
+                                :disabled="!canDeployProduction"
+                                class="success"
+                                :class="{ 'pulse-button': canDeployProduction }">
+                            🚀 Deploy para Produção
+                        </button>
+                    </div>
+                </div>
+
+                <div class="server-box">
+                    <div class="version-badge">BETA</div>
+                    <div class="server-title">
+                        <span>🚀 Early Adopters</span>
+                    </div>
+                    <div class="server-version">{{ earlyAdoptersVersion || 'latest' }}</div>
+                    <div class="deploy-buttons">
+                        <button @click="deployEarlyAdopters"
+                                :disabled="!canDeployEarlyAdopters"
+                                class="warning">
+                            🔄 Atualizar Versão
+                        </button>
+                        <button @click="runAutomatedTests"
+                                :disabled="!testsEnabled"
+                                class="success">
+                            🧪 Testes Automatizados
+                        </button>
+                        <button @click="runQATests"
+                                :disabled="!testsEnabled"
+                                class="success">
+                            📋 Teste Manual QA
+                        </button>
+                        <div class="test-status" :class="approvalStatus">
+                            <span v-if="testsPassed">✅</span>
+                            <span v-if="qaApproved">📋</span>
+                            {{ approvalMessage }}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Hotfix Branch -->
-        <div v-if="showHotfix" class="branch-column">
-            <div class="branch-header">Hotfix</div>
-            <div class="action-buttons">
-                <button @click="commitAction('hotfix')">📝 Commit</button>
-                <button @click="mergeHotfix" class="success">🔀 Merge</button>
-                <button @click="deleteBranch('hotfix')" class="delete">🗑️ Excluir</button>
-            </div>
-            <div class="commit-list">
-                <div v-for="(commit, idx) in branchData.hotfix"
-                     :key="commit.id"
-                     class="commit-bubble"
-                     :class="{ latest: idx === branchData.hotfix.length - 1 }"
-                     data-branch="hotfix"
-                     :data-commit-id="commit.id">
-                    {{ commit.label }}
+        <!-- Corpo Principal -->
+        <div class="main-content">
+            <!-- Painel Esquerdo - Branches -->
+            <div class="branches-panel">
+                <div class="branches-grid">
+
+                    <!-- Master Branch -->
+                    <div class="branch-column">
+                        <div class="branch-header">Master</div>
+                        <div class="action-buttons">
+                            <button @click="createHotfix" class="warning">🚑 Criar Hotfix</button>
+                        </div>
+                        <div class="commit-list">
+                            <div v-for="(commit, idx) in branchData.master"
+                                 :key="commit.id"
+                                 class="commit-bubble"
+                                 :class="{ latest: idx === branchData.master.length - 1 }"
+                                 data-branch="master"
+                                 :data-commit-id="commit.id">
+                                {{ commit.label }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hotfix Branch -->
+                    <div v-if="showHotfix" class="branch-column">
+                        <div class="branch-header">Hotfix</div>
+                        <div class="action-buttons">
+                            <button @click="commitAction('hotfix')">📝 Commit</button>
+                            <button @click="mergeHotfix" class="success">🔀 Merge</button>
+                            <button @click="deleteBranch('hotfix')" class="delete">🗑️ Excluir</button>
+                        </div>
+                        <div class="commit-list">
+                            <div v-for="(commit, idx) in branchData.hotfix"
+                                 :key="commit.id"
+                                 class="commit-bubble"
+                                 :class="{ latest: idx === branchData.hotfix.length - 1 }"
+                                 data-branch="hotfix"
+                                 :data-commit-id="commit.id">
+                                {{ commit.label }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Release Branch -->
+                    <div v-if="showRelease" class="branch-column">
+                        <div class="branch-header">Release</div>
+                        <div class="action-buttons">
+                            <button @click="commitAction('release')">📝 Commit</button>
+                            <button @click="mergeRelease" class="success">🔀 Merge</button>
+                            <button @click="deleteBranch('release')" class="delete">🗑️ Excluir</button>
+                        </div>
+                        <div class="commit-list">
+                            <div v-for="(commit, idx) in branchData.release"
+                                 :key="commit.id"
+                                 class="commit-bubble"
+                                 :class="{ latest: idx === branchData.release.length - 1 }"
+                                 data-branch="release"
+                                 :data-commit-id="commit.id">
+                                {{ commit.label }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Develop Branch -->
+                    <div class="branch-column">
+                        <div class="branch-header">Develop</div>
+                        <div class="action-buttons">
+                            <button @click="createFeatureBranch" class="warning">⚙️ Criar Feature</button>
+                            <button @click="autoTest" class="success">🧪 Testes Automatizados</button>
+                            <button @click="qaTestFeature" class="success">🧪 QA Testar</button>
+                            <button @click="createRelease" class="warning">🚀 Criar Release</button>
+                        </div>
+                        <div class="commit-list">
+                            <div v-for="(commit, idx) in branchData.develop"
+                                 :key="commit.id"
+                                 class="commit-bubble"
+                                 :class="{ latest: idx === branchData.develop.length - 1 }"
+                                 data-branch="develop"
+                                 :data-commit-id="commit.id">
+                                {{ commit.label }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feature Branches -->
+                    <div v-for="(featureBranch, index) in featureBranches" :key="featureBranch.name" class="branch-column">
+                        <div class="branch-header">{{ featureBranch.name }}</div>
+                        <div class="action-buttons">
+                            <button @click="commitFeature(featureBranch)">📝 Commit</button>
+                            <button @click="testFeatureBranch(featureBranch)" class="success">🧪 Testar</button>
+                            <button @click="mergeFeatureBranch(featureBranch)" class="success">🔀 Merge</button>
+                            <button @click="deleteFeatureBranch(featureBranch)" class="delete">🗑️ Excluir</button>
+                        </div>
+                        <div class="commit-list">
+                            <div v-for="(commit, idx) in featureBranch.commits"
+                                 :key="commit.id"
+                                 class="commit-bubble"
+                                 :class="{ latest: idx === featureBranch.commits.length - 1, 'feature-flag': commit.featureFlag }"
+                                 :data-branch="featureBranch.name"
+                                 :data-commit-id="commit.id">
+                                {{ commit.label }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Staging Branch -->
-        <div class="branch-column">
-            <div class="branch-header">Staging</div>
-            <div class="action-buttons">
-                <button @click="commitAction('staging')">📝 Commit</button>
-                <button @click="autoTestStaging" class="success">🧪 Testes Automatizados</button>
-                <button @click="qaTestStaging" class="success">🧪 QA Testar</button>
-                <button @click="mergeStaging" class="success">🔀 Merge</button>
-            </div>
-            <div class="commit-list">
-                <div v-for="(commit, idx) in branchData.staging"
-                     :key="commit.id"
-                     class="commit-bubble"
-                     :class="{ latest: idx === branchData.staging.length - 1 }"
-                     data-branch="staging"
-                     :data-commit-id="commit.id">
-                    {{ commit.label }}
+            <!-- Painel Direito - Logs -->
+            <div class="logs-panel">
+                <div class="log-container">
+                    <h3>📜 Histórico de Ações</h3>
+                    <div v-for="(entry, idx) in logs" :key="idx" class="log-entry" :class="entry.type">
+                        <span class="log-timestamp">{{ entry.timestamp }}</span>
+                        <span class="log-content">{{ entry.message }}</span>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Release Branch -->
-        <div v-if="showRelease" class="branch-column">
-            <div class="branch-header">Release</div>
-            <div class="action-buttons">
-                <button @click="commitAction('release')">📝 Commit</button>
-                <button @click="mergeRelease" class="success">🔀 Merge</button>
-                <button @click="deleteBranch('release')" class="delete">🗑️ Excluir</button>
-            </div>
-            <div class="commit-list">
-                <div v-for="(commit, idx) in branchData.release"
-                     :key="commit.id"
-                     class="commit-bubble"
-                     :class="{ latest: idx === branchData.release.length - 1 }"
-                     data-branch="release"
-                     :data-commit-id="commit.id">
-                    {{ commit.label }}
-                </div>
-            </div>
-        </div>
-
-        <!-- Develop Branch -->
-        <div class="branch-column">
-            <div class="branch-header">Develop</div>
-            <div class="action-buttons">
-                <button @click="createFeatureBranch" class="warning">⚙️ Criar Feature</button>
-                <button @click="autoTest" class="success">🧪 Testes Automatizados</button>
-                <button @click="qaTestFeature" class="success">🧪 QA Testar</button>
-                <button @click="createRelease" class="warning">🚀 Criar Release</button>
-            </div>
-            <div class="commit-list">
-                <div v-for="(commit, idx) in branchData.develop"
-                     :key="commit.id"
-                     class="commit-bubble"
-                     :class="{ latest: idx === branchData.develop.length - 1 }"
-                     data-branch="develop"
-                     :data-commit-id="commit.id">
-                    {{ commit.label }}
-                </div>
-            </div>
-        </div>
-
-        <!-- Feature Branches -->
-        <div v-for="(featureBranch, index) in featureBranches" :key="featureBranch.name" class="branch-column">
-            <div class="branch-header">{{ featureBranch.name }}</div>
-            <div class="action-buttons">
-                <button @click="commitFeature(featureBranch)">📝 Commit</button>
-                <button @click="testFeatureBranch(featureBranch)" class="success">🧪 Testar</button>
-                <button @click="mergeFeatureBranch(featureBranch)" class="success">🔀 Merge</button>
-                <button @click="deleteFeatureBranch(featureBranch)" class="delete">🗑️ Excluir</button>
-            </div>
-            <div class="commit-list">
-                <div v-for="(commit, idx) in featureBranch.commits"
-                     :key="commit.id"
-                     class="commit-bubble"
-                     :class="{ latest: idx === featureBranch.commits.length - 1, 'feature-flag': commit.featureFlag }"
-                     :data-branch="featureBranch.name"
-                     :data-commit-id="commit.id">
-                    {{ commit.label }}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="log-container">
-        <h3>📜 Histórico de Ações</h3>
-        <div v-for="(entry, idx) in logs" :key="idx" class="log-entry" :class="entry.type">
-            <span class="log-timestamp">{{ entry.timestamp }}</span>
-            <span class="log-content">{{ entry.message }}</span>
         </div>
     </div>
 
@@ -691,7 +792,7 @@
             </template>
             <template v-else-if="modalType === 'gmud'">
                 <h2>Preenchimento de GMUD</h2>
-                <p>Essa mudança pode quebrar o sistema?</p>
+                <p>Todos os testes passaram e gmud aprovada?</p>
                 <div class="modal-buttons">
                     <button class="success" @click="confirmGMUD">Sim</button>
                     <button class="delete" @click="rejectGMUD">Não</button>
@@ -706,14 +807,14 @@
         el: '#app',
         data() {
             return {
-                branchData: {master: [], staging: [], develop: [], release: [], hotfix: []},
+                branchData: {master: [], develop: [], release: [], hotfix: []},
                 featureBranches: [],
                 featureCounter: 1,
                 showHotfix: false,
                 showRelease: false,
                 lines: [],
-                svgWidth: 5000,
-                svgHeight: 5000,
+                svgWidth: window.innerWidth,
+                svgHeight: window.innerHeight,
                 actionCounter: 0,
                 logs: [],
                 version: {major: 1, minor: 0, patch: 0},
@@ -725,13 +826,17 @@
                 testsEnabled: false,
                 testsPassed: false,
                 qaApproved: false,
-                approvalMessage: 'Aguardando testes',
+                approvalMessage: '',
             }
         },
         mounted() {
             this.commitAction('master');
-            this.commitAction('staging');
             this.commitAction('develop');
+            window.addEventListener('resize', this.handleResize);
+            this.handleResize();
+        },
+        beforeDestroy() {
+            window.removeEventListener('resize', this.handleResize);
         },
         computed: {
             canDeployEarlyAdopters() {
@@ -749,6 +854,11 @@
             }
         },
         methods: {
+            handleResize() {
+                this.svgWidth = window.innerWidth;
+                this.svgHeight = window.innerHeight;
+                this.$nextTick(this.updateLinePositions);
+            },
             getVersionString() {
                 return `${this.version.major}.${this.version.minor}.${this.version.patch}`;
             },
@@ -878,50 +988,6 @@
                     this.addLog(`🚑 Criou a branch HOTFIX`);
                 }
             },
-            mergeStaging() {
-                const stgList = this.branchData.staging;
-                if (!stgList.length) return;
-                const lastStgCommit = stgList[stgList.length - 1];
-                if (!lastStgCommit) return;
-                // Solicita aprovação do DEV
-                this.mergeApproval(() => {
-                    this.version.minor++;
-                    this.version.patch = 0;
-                    const newMaster = this.createCommit('master', false);
-                    const newDev = this.createCommit('develop', false);
-                    this.lines.push(
-                        {
-                            fromBranch: 'staging',
-                            fromId: lastStgCommit.id,
-                            toBranch: 'master',
-                            toId: newMaster.id,
-                            x1: 0,
-                            y1: 0,
-                            x2: 0,
-                            y2: 0,
-                            isNew: true
-                        },
-                        {
-                            fromBranch: 'staging',
-                            fromId: lastStgCommit.id,
-                            toBranch: 'develop',
-                            toId: newDev.id,
-                            x1: 0,
-                            y1: 0,
-                            x2: 0,
-                            y2: 0,
-                            isNew: true
-                        }
-                    );
-                    this.actionCounter++;
-                    this.addLog(`🔀 Merge STAGING -> MASTER & DEVELOP | Nova versão: ${this.getVersionString()}`);
-                    this.$nextTick(() => {
-                        this.updateLinePositions();
-                    });
-                    // Chama a modal de GMUD se o merge envolver a master
-                    this.gmudApproval();
-                });
-            },
             createRelease() {
                 if (!this.showRelease) {
                     const lastDevelopCommit = this.branchData.develop[this.branchData.develop.length - 1];
@@ -945,16 +1011,69 @@
                 this.version.minor++;
                 this.version.patch = 0;
                 const newMaster = this.createCommit('master');
+                const stgList = this.branchData.release;
+                if (!stgList.length) return;
+                const lastStgCommit = stgList[stgList.length - 1];
+                if (!lastStgCommit) return;
+
                 this.addLog(`🔀 Merge RELEASE -> MASTER | Nova versão: ${this.getVersionString()}`);
                 this.$nextTick(() => { this.updateLinePositions(); });
-                this.gmudApproval();
+                this.mergeApproval(() => {
+                    this.version.minor++;
+                    this.version.patch = 0;
+                    const newMaster = this.createCommit('master', false);
+                    const newDev = this.createCommit('develop', false);
+                    this.lines.push(
+                        {
+                            fromBranch: 'release',
+                            fromId: lastStgCommit.id,
+                            toBranch: 'master',
+                            toId: newMaster.id,
+                            x1: 0,
+                            y1: 0,
+                            x2: 0,
+                            y2: 0,
+                            isNew: true
+                        },
+                        {
+                            fromBranch: 'release',
+                            fromId: lastStgCommit.id,
+                            toBranch: 'develop',
+                            toId: newDev.id,
+                            x1: 0,
+                            y1: 0,
+                            x2: 0,
+                            y2: 0,
+                            isNew: true
+                        }
+                    );
+                    this.actionCounter++;
+                    this.addLog(`🔀 Merge STAGING -> MASTER & DEVELOP | Nova versão: ${this.getVersionString()}`);
+                    this.$nextTick(() => {
+                        this.updateLinePositions();
+                    });
+                    // Chama a modal de GMUD se o merge envolver a master
+                    this.gmudApproval();
+                });
             },
             mergeHotfix() {
-                this.version.patch++;
-                const newMaster = this.createCommit('master');
-                this.addLog(`🔀 Merge HOTFIX -> MASTER | Nova versão: ${this.getVersionString()}`);
-                this.$nextTick(() => { this.updateLinePositions(); });
-                this.gmudApproval();
+                const hfxList = this.branchData.hotfix;
+                if (!hfxList.length) return;
+                const lastHfx = hfxList[hfxList.length - 1];
+                if (!lastHfx) return;
+                this.mergeApproval(() => {
+                    this.version.patch++;
+                    const newMst = this.createCommit('master', false);
+                    const newDev = this.createCommit('develop', false);
+                    this.lines.push(
+                        { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'master', toId: newMst.id, x1: 0, y1: 0, x2: 0, y2: 0, isNew: true },
+                        { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'develop', toId: newDev.id, x1: 0, y1: 0, x2: 0, y2: 0, isNew: true }
+                    );
+                    this.actionCounter++;
+                    this.addLog(`🔀 Merge HOTFIX -> MASTER & DEVELOP | Nova versão: ${this.getVersionString()}`);
+                    this.$nextTick(() => { this.updateLinePositions(); });
+                    this.gmudApproval();
+                });
             },
             mergeFeatureBranch(featureBranch) {
                 const featList = featureBranch.commits;
@@ -992,11 +1111,6 @@
                 this.addLog(`🧪 TESTE AUTOMATIZADO em HOTFIX no próprio computador`, 'automated-test');
                 this.showTestEffect('hotfix', 'automated');
             },
-            autoTestStaging() {
-                this.actionCounter++;
-                this.addLog(`🧪 TESTE AUTOMATIZADO em STAGING`, 'automated-test');
-                this.showTestEffect('staging', 'automated');
-            },
             autoTestRelease() {
                 this.actionCounter++;
                 this.addLog(`🧪 TESTE AUTOMATIZADO em RELEASE`, 'automated-test');
@@ -1006,11 +1120,6 @@
                 this.actionCounter++;
                 this.addLog(`📋 TESTE MANUAL QA em DESENVOLVIMENTO`, 'qa-test');
                 this.showTestEffect('develop', 'qa');
-            },
-            qaTestStaging() {
-                this.actionCounter++;
-                this.addLog(`📋 TESTE MANUAL QA em STAGING`, 'qa-test');
-                this.showTestEffect('staging', 'qa');
             },
             showTestEffect(branch, testType) {
                 const branchColumn = [...document.querySelectorAll('.branch-header')]
@@ -1060,8 +1169,11 @@
                 );
             },
             updateLinePositions() {
-                if (!this.$refs.container) return;
-                const containerRect = this.$refs.container.getBoundingClientRect();
+                const container = this.$refs.mainContainer; // Alterar para mainContainer
+                if (!container) return;
+
+                const containerRect = container.getBoundingClientRect();
+
                 this.lines.forEach(line => {
                     const fromEl = document.querySelector(
                         `[data-branch="${line.fromBranch}"][data-commit-id="${line.fromId}"]`
@@ -1069,15 +1181,19 @@
                     const toEl = document.querySelector(
                         `[data-branch="${line.toBranch}"][data-commit-id="${line.toId}"]`
                     );
+
                     if (fromEl && toEl) {
                         const fromRect = fromEl.getBoundingClientRect();
                         const toRect = toEl.getBoundingClientRect();
-                        line.x1 = fromRect.left - containerRect.left + fromRect.width / 2;
-                        line.y1 = fromRect.top - containerRect.top + fromRect.height / 2;
-                        line.x2 = toRect.left - containerRect.left + toRect.width / 2;
-                        line.y2 = toRect.top - containerRect.top + toRect.height / 2;
+
+                        // Calcular coordenadas relativas ao main-container
+                        line.x1 = fromRect.left - containerRect.left + fromRect.width/2;
+                        line.y1 = fromRect.top - containerRect.top + fromRect.height/2;
+                        line.x2 = toRect.left - containerRect.left + toRect.width/2;
+                        line.y2 = toRect.top - containerRect.top + toRect.height/2;
                     }
                 });
+
                 this.lines = [...this.lines];
                 this.markLineAsOld();
             },
@@ -1140,7 +1256,7 @@
                 }, 100);
             },
             confirmGMUD() {
-                this.addLog("Deploy e merge para a branch master só pode ser realizado fora do horário comercial");
+                this.addLog(`GMUD confirmada, pronto para deploy`);
                 this.mergeModalVisible = false;
             },
             rejectGMUD() {

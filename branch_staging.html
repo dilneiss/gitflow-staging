@@ -365,7 +365,6 @@
       <div class="branch-header">Release</div>
       <div class="action-buttons">
         <button @click="commitAction('release')">📝 Commit</button>
-        <button @click="autoTestRelease" class="success">🧪 Testes Automatizados</button>
         <button @click="mergeRelease" class="success">🔀 Merge</button>
         <button @click="deleteBranch('release')" class="delete">🗑️ Excluir</button>
       </div>
@@ -532,7 +531,7 @@
             isNew: true
           });
         }
-        if (logIt) this.addLog(`Commit na branch ${branch.name} com feature flag`);
+        if (logIt) this.addLog(`Commit na branch ${branch.name}`);
         this.$nextTick(() => {
           this.updateLinePositions();
           this.animateCommit(newCommit.id);
@@ -692,11 +691,6 @@
         this.actionCounter++;
         this.addLog(`🧪 TESTE AUTOMATIZADO em STAGING`, 'automated-test');
         this.showTestEffect('staging', 'automated');
-      },
-      autoTestRelease() {
-        this.actionCounter++;
-        this.addLog(`🧪 TESTE AUTOMATIZADO em RELEASE`, 'automated-test');
-        this.showTestEffect('release', 'automated');
       },
       qaTestFeature() {
         this.actionCounter++;

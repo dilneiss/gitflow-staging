@@ -628,7 +628,7 @@
                     <div class="server-title">
                         <span>🚀 Early Adopters</span>
                     </div>
-                    <div class="server-version">{{ earlyAdoptersVersion || 'latest' }}</div>
+                    <div class="server-version">{{ earlyAdoptersVersion || productionVersion }}</div>
                     <div class="deploy-buttons">
                         <button @click="deployEarlyAdopters"
                                 :disabled="!canDeployEarlyAdopters"

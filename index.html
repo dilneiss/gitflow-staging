@@ -1016,7 +1016,6 @@
                 const lastStgCommit = stgList[stgList.length - 1];
                 if (!lastStgCommit) return;
 
-                this.addLog(`🔀 Merge RELEASE -> MASTER | Nova versão: ${this.getVersionString()}`);
                 this.$nextTick(() => { this.updateLinePositions(); });
                 this.mergeApproval(() => {
                     this.version.minor++;
@@ -1048,7 +1047,8 @@
                         }
                     );
                     this.actionCounter++;
-                    this.addLog(`🔀 Merge STAGING -> MASTER & DEVELOP | Nova versão: ${this.getVersionString()}`);
+                    this.addLog(`🔀 Merge Release -> MASTER & DEVELOP`);
+                    this.addLog(`🏷️ Nova versão criada a partir da MASTER automaticamente: ${this.getVersionString()}`);
                     this.$nextTick(() => {
                         this.updateLinePositions();
                     });
@@ -1070,7 +1070,8 @@
                         { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'develop', toId: newDev.id, x1: 0, y1: 0, x2: 0, y2: 0, isNew: true }
                     );
                     this.actionCounter++;
-                    this.addLog(`🔀 Merge HOTFIX -> MASTER & DEVELOP | Nova versão: ${this.getVersionString()}`);
+                    this.addLog(`🔀 Merge HOTFIX -> MASTER & DEVELOP`);
+                    this.addLog(`🏷️ Nova versão criada a partir da MASTER automaticamente: ${this.getVersionString()}`);
                     this.$nextTick(() => { this.updateLinePositions(); });
                     this.gmudApproval();
                 });
@@ -1205,7 +1206,7 @@
             addLog(msg, type = '') {
                 this.logs.unshift({
                     timestamp: new Date().toLocaleTimeString(),
-                    message: `[${this.actionCounter}] - ${msg}`,
+                    message: `${msg}`,
                     type: type
                 });
                 if (msg.includes('Merge')) {

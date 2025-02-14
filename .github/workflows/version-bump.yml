@@ -1,4 +1,4 @@
-name: Version Bump on Merge to Main
+name: Version Bump & Commit Summary on Merge to Main
 
 on:
   push:
@@ -23,6 +23,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            // Itera sobre os commits do push para detectar palavras-chave
             const commits = context.payload.commits;
             let featureDetected = false;
             let hotfixDetected = false;
@@ -40,6 +41,7 @@ jobs:
               console.log("Nenhuma alteração de feature ou hotfix detectada. Encerrando.");
               return;
             }
+            // Lista os tags e obtém o último tag
             const tags = await github.rest.repos.listTags({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -50,7 +52,7 @@ jobs:
             }
             const latestTag = tags.data[0].name;
             console.log("Último tag:", latestTag);
-            // Aceita tags com ou sem "v"
+            // Aceita tags com ou sem "v" no início
             const semverRegex = /^v?(\d+)\.(\d+)\.(\d+)$/;
             const match = latestTag.match(semverRegex);
             if (!match) {
@@ -60,6 +62,7 @@ jobs:
             const minor = parseInt(match[2]);
             const patch = parseInt(match[3]);
             let newVersion;
+            // Se houver feature, incrementa o minor e zera o patch; se hotfix, incrementa o patch.
             if (featureDetected) {
               newVersion = `v${major}.${minor + 1}.0`;
             } else if (hotfixDetected) {
@@ -67,8 +70,9 @@ jobs:
             }
             console.log("Nova versão:", newVersion);
             core.setOutput("new_version", newVersion);
-      
+
       - name: Create new tag and release
+        id: create_release
         uses: actions/github-script@v6
         with:
           script: |
@@ -88,7 +92,7 @@ jobs:
             });
             console.log("Tag criada com sucesso.");
             // Cria um release para o novo tag
-            await github.rest.repos.createRelease({
+            const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: newVersion,
@@ -98,3 +102,48 @@ jobs:
               prerelease: false
             });
             console.log("Release criada com sucesso.");
+            core.setOutput("release_id", release.data.id);
+            return newVersion;
+
+      - name: Post commit comment with commit summary
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Agrupa os commits por branch prefix (hotfix/ ou feature/)
+            const commits = context.payload.commits;
+            let commitsByBranch = {};
+            for (const commit of commits) {
+              let msg = commit.message;
+              let branchPrefix = null;
+              if (msg.startsWith("hotfix/")) {
+                branchPrefix = msg.split(" ")[0];
+              } else if (msg.startsWith("feature/")) {
+                branchPrefix = msg.split(" ")[0];
+              }
+              if (branchPrefix) {
+                if (!commitsByBranch[branchPrefix]) {
+                  commitsByBranch[branchPrefix] = [];
+                }
+                commitsByBranch[branchPrefix].push(msg);
+              }
+            }
+            let commentBody = "Resumo dos commits agrupados por branch:\n\n";
+            for (const branch in commitsByBranch) {
+              commentBody += `- ${branch}\n`;
+              for (const commitMsg of commitsByBranch[branch]) {
+                commentBody += `  - ${commitMsg}\n`;
+              }
+            }
+            if (commentBody === "Resumo dos commits agrupados por branch:\n\n") {
+              commentBody = "Nenhum commit de feature ou hotfix identificado.";
+            }
+            console.log(commentBody);
+            // Posta um comentário no commit que foi tagueado (commit do merge)
+            await github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.payload.after,
+              body: commentBody
+            });
+            console.log("Comentário com resumo dos commits postado.");

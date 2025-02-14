@@ -23,7 +23,6 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            // Verifica os commits do push para detectar palavras-chave
             const commits = context.payload.commits;
             let featureDetected = false;
             let hotfixDetected = false;
@@ -41,7 +40,6 @@ jobs:
               console.log("Nenhuma alteração de feature ou hotfix detectada. Encerrando.");
               return;
             }
-            // Lista os tags e obtém o último tag (assumindo que o primeiro é o mais recente)
             const tags = await github.rest.repos.listTags({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -52,7 +50,8 @@ jobs:
             }
             const latestTag = tags.data[0].name;
             console.log("Último tag:", latestTag);
-            const semverRegex = /^v(\d+)\.(\d+)\.(\d+)$/;
+            // Aceita tags com ou sem "v"
+            const semverRegex = /^v?(\d+)\.(\d+)\.(\d+)$/;
             const match = latestTag.match(semverRegex);
             if (!match) {
               throw new Error("O último tag não segue o formato semver: " + latestTag);
@@ -61,7 +60,6 @@ jobs:
             const minor = parseInt(match[2]);
             const patch = parseInt(match[3]);
             let newVersion;
-            // Se houver feature, incrementa o minor e zera o patch
             if (featureDetected) {
               newVersion = `v${major}.${minor + 1}.0`;
             } else if (hotfixDetected) {
@@ -69,7 +67,7 @@ jobs:
             }
             console.log("Nova versão:", newVersion);
             core.setOutput("new_version", newVersion);
-
+      
       - name: Create new tag and release
         uses: actions/github-script@v6
         with:

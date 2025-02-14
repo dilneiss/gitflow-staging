@@ -123,3 +123,11 @@ jobs:
             console.log("Release criada com sucesso.");
             core.setOutput("release_id", release.data.id);
             return newVersion;
+
+      - name: Deploy para produção (Fake)
+        run: |
+          VERSION=${{ steps.extract_version.outputs.version }}
+          echo "Iniciando deploy da versão $VERSION para produção..."
+          # Aqui você simula o deploy (ex: sleep, comandos de deploy, etc.)
+          sleep 5
+          echo "Deploy da versão $VERSION concluído com sucesso!"

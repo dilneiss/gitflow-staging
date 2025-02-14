@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Determine version bump
+      - name: Determine version bump and latest tag
         id: version_bump
         uses: actions/github-script@v6
         with:
@@ -62,14 +62,40 @@ jobs:
             const minor = parseInt(match[2]);
             const patch = parseInt(match[3]);
             let newVersion;
-            // Se houver feature, incrementa o minor e zera o patch; se hotfix, incrementa o patch.
             if (featureDetected) {
               newVersion = `v${major}.${minor + 1}.0`;
             } else if (hotfixDetected) {
               newVersion = `v${major}.${minor}.${patch + 1}`;
             }
             console.log("Nova versão:", newVersion);
+            // Armazena também o último tag para comparação posterior
             core.setOutput("new_version", newVersion);
+            core.setOutput("latest_tag", latestTag);
+
+      - name: Generate commit summary using git log
+        id: commit_summary
+        run: |
+          LATEST_TAG="${{ steps.version_bump.outputs.latest_tag }}"
+          echo "Latest tag: $LATEST_TAG"
+          # Obtém os commits entre o último tag e o HEAD
+          COMMIT_LOG=$(git log "$LATEST_TAG"..HEAD --pretty=format:"%s")
+          echo "Commit log:"
+          echo "$COMMIT_LOG"
+          SUMMARY=""
+          while IFS= read -r line; do
+            if [[ $line == hotfix/* ]]; then
+              prefix=$(echo "$line" | awk '{print $1}')
+              SUMMARY="${SUMMARY}- ${prefix}\n  - ${line}\n"
+            elif [[ $line == feature/* ]]; then
+              prefix=$(echo "$line" | awk '{print $1}')
+              SUMMARY="${SUMMARY}- ${prefix}\n  - ${line}\n"
+            fi
+          done <<< "$COMMIT_LOG"
+          if [ -z "$SUMMARY" ]; then
+            SUMMARY="Nenhum commit de feature ou hotfix identificado."
+          fi
+          echo -e "Commit summary:\n$SUMMARY"
+          echo "::set-output name=commit_summary::$SUMMARY"
 
       - name: Create new tag and release
         id: create_release
@@ -81,7 +107,6 @@ jobs:
               console.log("Nenhuma alteração de versão detectada. Encerrando.");
               return;
             }
-            // Usa o SHA do commit final do push
             const sha = context.payload.after;
             console.log("Criando tag", newVersion, "no commit", sha);
             await github.rest.git.createRef({
@@ -91,13 +116,15 @@ jobs:
               sha: sha
             });
             console.log("Tag criada com sucesso.");
-            // Cria um release para o novo tag
+            const commitSummary = `\n${process.env.COMMIT_SUMMARY || ''}`;
+            // Recebe o resumo dos commits do output do step anterior
+            const releaseBody = `Release ${newVersion} gerada a partir do merge na branch main.\n\nResumo dos commits:\n${'${{ steps.commit_summary.outputs.commit_summary }}'}`;
             const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: newVersion,
               name: newVersion,
-              body: `Release ${newVersion} gerada a partir do merge na branch main.`,
+              body: releaseBody,
               draft: false,
               prerelease: false
             });
@@ -110,36 +137,8 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            // Agrupa os commits por branch prefix (hotfix/ ou feature/)
-            const commits = context.payload.commits;
-            let commitsByBranch = {};
-            for (const commit of commits) {
-              let msg = commit.message;
-              let branchPrefix = null;
-              if (msg.startsWith("hotfix/")) {
-                branchPrefix = msg.split(" ")[0];
-              } else if (msg.startsWith("feature/")) {
-                branchPrefix = msg.split(" ")[0];
-              }
-              if (branchPrefix) {
-                if (!commitsByBranch[branchPrefix]) {
-                  commitsByBranch[branchPrefix] = [];
-                }
-                commitsByBranch[branchPrefix].push(msg);
-              }
-            }
-            let commentBody = "Resumo dos commits agrupados por branch:\n\n";
-            for (const branch in commitsByBranch) {
-              commentBody += `- ${branch}\n`;
-              for (const commitMsg of commitsByBranch[branch]) {
-                commentBody += `  - ${commitMsg}\n`;
-              }
-            }
-            if (commentBody === "Resumo dos commits agrupados por branch:\n\n") {
-              commentBody = "Nenhum commit de feature ou hotfix identificado.";
-            }
-            console.log(commentBody);
-            // Posta um comentário no commit que foi tagueado (commit do merge)
+            const commitSummary = '${{ steps.commit_summary.outputs.commit_summary }}';
+            const commentBody = "Resumo dos commits agrupados por branch:\n\n" + commitSummary;
             await github.rest.repos.createCommitComment({
               owner: context.repo.owner,
               repo: context.repo.repo,

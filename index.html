@@ -532,7 +532,7 @@
             isNew: true
           });
         }
-        if (logIt) this.addLog(`Commit na branch ${branch.name}`);
+        if (logIt) this.addLog(`Commit na branch ${branch.name} com feature flag`);
         this.$nextTick(() => {
           this.updateLinePositions();
           this.animateCommit(newCommit.id);

@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Atualizar título do PR para master
+      - name: Atualizar título do PR para main
         if: github.event.pull_request.base.ref == 'main'
         uses: actions/github-script@v6
         with:
@@ -49,7 +49,6 @@ jobs:
               title: newTitle
             });
 
-      # Detecta se o evento é "edited"
       - name: Verificar se é edição do corpo do PR
         id: check_event
         run: |
@@ -60,7 +59,6 @@ jobs:
             echo "::set-output name=edited::false"
           fi
 
-      # Verifica alterações de migrations (executa somente se NÃO for "edited")
       - name: Verificar alterações de migrations
         id: check_migrations
         if: steps.check_event.outputs.edited == 'false'
@@ -73,7 +71,6 @@ jobs:
             echo "::set-output name=has_migrations::false"
           fi
 
-      # Aplica e remove labels conforme as condições do formulário
       - name: Aplicar labels do formulário
         if: always()
         uses: actions/github-script@v6
@@ -82,7 +79,6 @@ jobs:
             const pull_number = context.payload.pull_request.number;
             const prBody = context.payload.pull_request.body || "";
             const edited = context.payload.action === "edited";
-            // Se não for 'edited', usamos a saída do step check_migrations; se for, não atualizamos a label Migration.
             let hasMigrations = false;
             if (!edited) {
               hasMigrations = '${{ steps.check_migrations.outputs.has_migrations }}' === 'true';
@@ -91,35 +87,30 @@ jobs:
             if (hasMigrations) {
               labelsToAdd.push("Migration");
             }
-            // Verifica se a opção "Essa mudança pode quebrar o sistema?" está marcada como Sim
             const breakRegex = /\*\*1\. Essa mudança pode quebrar o sistema\?\*\*\s*- \[[xX]\]\s+Sim/;
             if (breakRegex.test(prBody)) {
               labelsToAdd.push("Breaking Changes");
             }
-            // Se prioridade for "Crítica"
             const criticRegex = /\*\*3\. Classifique a prioridade dessa mudança:\*\*\s*- \[[xX]\]\s+Crítica/;
             if (criticRegex.test(prBody)) {
               labelsToAdd.push("Critic");
             }
-            // Se prioridade for "Normal"
             const normalRegex = /\*\*3\. Classifique a prioridade dessa mudança:\*\*\s*- \[[xX]\]\s+Normal/;
             if (normalRegex.test(prBody)) {
               labelsToAdd.push("Normal");
             }
-            // Se "A mudança foi homologada por QA?" estiver marcada como Sim
             const qaRegex = /\*\*4\. A mudança foi homologada por QA\?\*\*\s*- \[[xX]\]\s+Sim/;
             if (qaRegex.test(prBody)) {
               labelsToAdd.push("QA validated");
             }
             console.log("Labels para adicionar: " + JSON.stringify(labelsToAdd));
             const labelConfigs = {
-              "Migration": "0E8A16",         // verde
-              "Breaking Changes": "5319E7",  // roxo
-              "Critic": "FF0000",            // vermelho
-              "Normal": "1D76DB",            // azul
-              "QA validated": "0E8A16"       // verde
+              "Migration": "0E8A16",
+              "Breaking Changes": "5319E7",
+              "Critic": "FF0000",
+              "Normal": "1D76DB",
+              "QA validated": "0E8A16"
             };
-            // Função auxiliar para verificar e criar/atualizar label
             async function ensureLabel(label) {
               try {
                 await github.rest.issues.getLabel({
@@ -140,29 +131,25 @@ jobs:
                 }
               }
             }
-            // Cria ou atualiza as labels que devem ser aplicadas
             for (const label of labelsToAdd) {
               await ensureLabel(label);
             }
-            // Adiciona as labels ao PR
             if (labelsToAdd.length > 0) {
               await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pull_number,
-              labels: labelsToAdd
-            });
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pull_number,
+                labels: labelsToAdd
+              });
             } else {
               console.log("Nenhuma label para adicionar.");
             }
-            // Lista as labels atualmente aplicadas no PR
             const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pull_number
             });
             const currentLabelNames = currentLabels.map(l => l.name);
-            // Define as labels que queremos remover se não forem mais atendidas
             const removableLabels = ["Critic", "Breaking Changes", "QA validated"];
             for (const label of removableLabels) {
               if (currentLabelNames.includes(label) && !labelsToAdd.includes(label)) {
@@ -176,15 +163,6 @@ jobs:
               }
             }
 
-  fake-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      # Executa o teste fake: se houver alterações de migration, o teste é "passed"; senão, "failed"
       - name: Executar teste fake de migrations
         id: check_tests
         run: |
@@ -195,7 +173,6 @@ jobs:
             echo "::set-output name=testResult::failed"
           fi
 
-      # Atualiza as labels de teste conforme o resultado
       - name: Atualizar labels de teste
         uses: actions/github-script@v6
         with:
@@ -204,8 +181,8 @@ jobs:
             const testResult = '${{ steps.check_tests.outputs.testResult }}';
             console.log("Resultado do teste fake: " + testResult);
             const labelConfigs = {
-              "Tests Passed": "0E8A16", // verde
-              "Tests Failed": "FF0000"  // vermelho
+              "Tests Passed": "0E8A16",
+              "Tests Failed": "FF0000"
             };
             let labelToAdd, labelToRemove;
             if (testResult === 'passed') {
@@ -236,7 +213,6 @@ jobs:
               }
             }
             await ensureLabel(labelToAdd);
-            // Se houver labels para adicionar, aplica-as (verifica se o array não está vazio)
             if ([labelToAdd].length > 0) {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
@@ -259,12 +235,10 @@ jobs:
                 name: labelToRemove
               });
             }
-            // Se o teste fake falhar, lança um erro para interromper o workflow
             if (testResult === 'failed') {
               throw new Error("Fake tests failed.");
             }
 
-      # Se os testes passaram, solicita automaticamente o revisor "dilneiss"
       - name: Solicitar aprovação automática e atribuição
         if: steps.check_tests.outputs.testResult == 'passed'
         uses: actions/github-script@v6
@@ -272,46 +246,100 @@ jobs:
           script: |
             const pull_number = context.payload.pull_request.number;
             const pr = context.payload.pull_request;
-
-            // Verifica se já há algum revisor designado
             if (pr.requested_reviewers && pr.requested_reviewers.length > 0) {
               console.log("Já existe um revisor designado. Nenhuma ação tomada.");
               return;
             }
-
-            // Lista de revisores possíveis
-            const reviewersList = ["dilneiss", "dilneiconectala", "dilneiconectala"];
-
-            // Obter o autor do PR
+            const reviewersList = ["dilneiss", "dilneiconectala"];
             const prAuthor = pr.user.login;
-
-            // Remove o autor da lista de revisores para evitar que ele seja escolhido como revisor
             const filteredReviewers = reviewersList.filter(rev => rev !== prAuthor);
-
-            // Se a lista ficar vazia, não faz nada
             if (filteredReviewers.length === 0) {
               console.log("Não há revisores disponíveis que não sejam o autor do PR.");
               return;
             }
-
-            // Seleciona aleatoriamente um revisor da lista filtrada
             const selectedReviewer = filteredReviewers[Math.floor(Math.random() * filteredReviewers.length)];
             console.log(`Revisor selecionado: ${selectedReviewer}`);
-
-            // Solicita o revisor selecionado
             await github.rest.pulls.requestReviewers({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pull_number,
               reviewers: [selectedReviewer]
             });
-
-            // Atribui tanto o revisor selecionado quanto o autor do PR como responsáveis (assignees)
             await github.rest.issues.addAssignees({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pull_number,
               assignees: [selectedReviewer, prAuthor]
             });
-      
+
+      - name: Redirect Hotfix/Feature PR to Develop
+        if: startsWith(github.event.pull_request.head.ref, 'hotfix') || startsWith(github.event.pull_request.head.ref, 'feature')
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const originalPR = context.payload.pull_request;
+            console.log("PR original #" + originalPR.number);
+            // Verifica se já existe um PR aberto com o mesmo head para a branch develop
+            const existingPRs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              head: `${context.repo.owner}:${originalPR.head.ref}`,
+              base: "develop"
+            });
+            if (existingPRs.data.length > 0) {
+              console.log("Já existe um PR para develop com esse head. Nenhuma ação tomada.");
+              return;
+            }
+            // Cria o PR para develop com corpo contendo apenas o link do PR original
+            const newPR = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: originalPR.title,
+              head: originalPR.head.ref,
+              base: "develop",
+              body: `Pull Request para Main: ${originalPR.html_url}`
+            });
+            core.setOutput("newPRUrl", newPR.data.html_url);
+            core.setOutput("newPRNumber", newPR.data.number.toString());
+            core.setOutput("originalPRUrl", originalPR.html_url);
+            // Obter revisores e assignees do PR original
+            const originalReviewers = originalPR.requested_reviewers.map(r => r.login);
+            const originalAssignees = originalPR.assignees.map(a => a.login);
+            console.log("Revisores originais: " + JSON.stringify(originalReviewers));
+            console.log("Assignees originais: " + JSON.stringify(originalAssignees));
+            // Adiciona os mesmos revisores ao novo PR, se houver
+            if (originalReviewers.length > 0) {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: newPR.data.number,
+                reviewers: originalReviewers
+              });
+            }
+            // Atribui os mesmos assignees (além dos que já possam estar) no novo PR
+            const combinedAssignees = Array.from(new Set([...originalAssignees]));
+            if (combinedAssignees.length > 0) {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: newPR.data.number,
+                assignees: combinedAssignees
+              });
+            }
+            // Comenta no PR original com o link do PR para develop
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: originalPR.number,
+              body: `Pull Request para Develop: ${newPR.data.html_url}`
+            });
+            // Atualiza o corpo do novo PR para conter somente o link do PR original
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: newPR.data.number,
+              body: `Pull Request para Main: ${originalPR.html_url}`
+            });
+            console.log("Redirecionamento para develop concluído.");
       

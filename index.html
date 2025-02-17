@@ -648,7 +648,7 @@
                     <div class="server-title">
                         <span>🏭 Produção Geral</span>
                     </div>
-                    <div class="server-version">{{ productionVersion }}</div>
+                    <div class="server-version">v{{ productionVersion }}</div>
                     <div class="deploy-buttons">
                         <button @click="deployProduction"
                                 :disabled="!canDeployProduction"
@@ -664,7 +664,7 @@
                     <div class="server-title">
                         <span>🚀 Early Adopters</span>
                     </div>
-                    <div class="server-version">{{ earlyAdoptersVersion || productionVersion }}</div>
+                    <div class="server-version">v{{ earlyAdoptersVersion || productionVersion }}</div>
                     <div class="deploy-buttons">
                         <button @click="deployEarlyAdopters"
                                 :disabled="!canDeployEarlyAdopters"
@@ -885,7 +885,7 @@
                 mergeModalVisible: false,
                 modalType: 'devApproval', // 'devApproval' or 'gmud'
                 mergeModalData: {},
-                productionVersion: 'v1.0.0',
+                productionVersion: '1.0.0',
                 earlyAdoptersVersion: null,
                 testsEnabled: false,
                 testsPassed: false,

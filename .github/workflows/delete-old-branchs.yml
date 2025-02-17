@@ -1,0 +1,102 @@
+name: Delete merged branches (advanced)
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # roda diariamente à meia-noite (UTC)
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Limpar branches mergeadas
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const reservedBranches = ["develop", "main", "master"];
+
+            // Determina a branch de produção: usa "main" se existir; caso contrário, "master"
+            let prodBranch = null;
+            try {
+              await github.rest.repos.getBranch({ owner, repo, branch: "main" });
+              prodBranch = "main";
+            } catch (error) {
+              console.log("Branch 'main' não encontrada, tentando 'master'...");
+              try {
+                await github.rest.repos.getBranch({ owner, repo, branch: "master" });
+                prodBranch = "master";
+              } catch (error2) {
+                console.log("Nenhuma branch de produção ('main' ou 'master') encontrada. Encerrando.");
+                return;
+              }
+            }
+            console.log("Branch de produção definida como:", prodBranch);
+
+            // Confirma que a branch de integração é "develop"
+            const developBranch = "develop";
+            try {
+              await github.rest.repos.getBranch({ owner, repo, branch: developBranch });
+            } catch (error) {
+              console.log("Branch 'develop' não encontrada. Encerrando.");
+              return;
+            }
+
+            // Lista todas as branches (limitado a 100; para muitos branches, considere paginação)
+            const branchesResponse = await github.rest.repos.listBranches({ owner, repo, per_page: 100 });
+            const branches = branchesResponse.data;
+
+            for (const branch of branches) {
+              const branchName = branch.name;
+              if (reservedBranches.includes(branchName)) {
+                console.log(`Ignorando branch reservada: ${branchName}`);
+                continue;
+              }
+              console.log(`Verificando branch: ${branchName}`);
+
+              // Compara a branch com a branch develop
+              let compareDevelop;
+              try {
+                compareDevelop = await github.rest.repos.compareCommits({
+                  owner,
+                  repo,
+                  base: developBranch,
+                  head: branch.commit.sha,
+                });
+              } catch (error) {
+                console.log(`Erro ao comparar branch ${branchName} com ${developBranch}: ${error.message}`);
+                continue;
+              }
+            
+              // Compara a branch com a branch de produção
+              let compareProd;
+              try {
+                compareProd = await github.rest.repos.compareCommits({
+                  owner,
+                  repo,
+                  base: prodBranch,
+                  head: branch.commit.sha,
+                });
+              } catch (error) {
+                console.log(`Erro ao comparar branch ${branchName} com ${prodBranch}: ${error.message}`);
+                continue;
+              }
+            
+              // Verifica se a branch não está à frente em develop e na branch de produção
+              if (compareDevelop.data.ahead_by === 0 && compareProd.data.ahead_by === 0) {
+                console.log(`Branch ${branchName} está totalmente mergeada em ${developBranch} e ${prodBranch}. Deletando...`);
+                try {
+                  await github.rest.git.deleteRef({
+                    owner,
+                    repo,
+                    ref: `heads/${branchName}`,
+                  });
+                  console.log(`Branch ${branchName} deletada.`);
+                } catch (error) {
+                  console.log(`Erro ao deletar branch ${branchName}: ${error.message}`);
+                }
+              } else {
+                console.log(`Branch ${branchName} NÃO está totalmente mergeada.`);
+              }
+            }

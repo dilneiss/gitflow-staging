@@ -110,7 +110,7 @@ jobs:
             });
             console.log("Tag criada com sucesso.");
             const commitSummary = '${{ steps.commit_summary.outputs.commit_summary }}';
-            const releaseBody = `Release ${newVersion} gerada a partir do merge na branch main.\n\nResumo dos commits:\n${commitSummary}`;
+            const releaseBody = `Release ${newVersion} gerada a partir do merge na branch main.\n\n${commitSummary}`;
             const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,

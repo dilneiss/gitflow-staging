@@ -530,7 +530,7 @@
         /* Ajustes nos Servidores */
         .servers-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(4, minmax(300px, 1fr));
             gap: 1rem;
             max-width: 1200px;
             margin: 0 auto;
@@ -594,6 +594,14 @@
             background: #6366f1;
             box-shadow: 0 0 8px #6366f1;
         }
+        .server-box[style*="background: linear-gradient(145deg, #4f46e5, #3730a3)"] {
+            border-color: rgba(79, 70, 229, 0.3);
+        }
+
+        .server-box[style*="background: linear-gradient(145deg, #4f46e5, #3730a3)"] .server-title::before {
+            background: #4f46e5;
+            box-shadow: 0 0 8px #4f46e5;
+        }
     </style>
 </head>
 <body>
@@ -616,12 +624,31 @@
         <div class="servers-top">
             <h2 style="text-align: center; margin-bottom: 1rem; color: var(--primary)">🏭 Servidores</h2>
             <div class="servers-container">
+                <div class="server-box" style="background: linear-gradient(145deg, #4f46e5, #3730a3); min-height: 450px;">
+                    <div class="version-badge">GMUD</div>
+                    <div class="server-title">
+                        <span>📑 GMUD Virtual</span>
+                    </div>
+                    <div class="deploy-buttons">
+                        <div style="max-height: 260px; overflow-y: auto; margin: 1rem 0;">
+                            <div v-for="(gmud, idx) in gmudVersions" :key="idx"
+                                 class="log-entry"
+                                 style="margin: 0.5rem 0; padding: 0.5rem; background: rgba(255,255,255,0.05);">
+                                🏷️ Versão {{ gmud.version }}
+                            </div>
+                        </div>
+                        <button @click="entregarDemandas" class="success">
+                            🚚 Entregar Demandas
+                        </button>
+                    </div>
+                </div>
+
                 <div class="server-box">
                     <div class="version-badge">PROD</div>
                     <div class="server-title">
                         <span>🏭 Produção Geral</span>
                     </div>
-                    <div class="server-version">{{ productionVersion }}</div>
+                    <div class="server-version">v{{ productionVersion }}</div>
                     <div class="deploy-buttons">
                         <button @click="deployProduction"
                                 :disabled="!canDeployProduction"
@@ -637,7 +664,7 @@
                     <div class="server-title">
                         <span>🚀 Early Adopters</span>
                     </div>
-                    <div class="server-version">{{ earlyAdoptersVersion || productionVersion }}</div>
+                    <div class="server-version">v{{ earlyAdoptersVersion || productionVersion }}</div>
                     <div class="deploy-buttons">
                         <button @click="deployEarlyAdopters"
                                 :disabled="!canDeployEarlyAdopters"
@@ -858,7 +885,7 @@
                 mergeModalVisible: false,
                 modalType: 'devApproval', // 'devApproval' or 'gmud'
                 mergeModalData: {},
-                productionVersion: 'v1.0.0',
+                productionVersion: '1.0.0',
                 earlyAdoptersVersion: null,
                 testsEnabled: false,
                 testsPassed: false,
@@ -867,7 +894,8 @@
                 approvalMessage: 'Ambiente Atualizado',
                 hmlApprovalMessage: 'Aguardando testes automatizados',
                 homologationBranch: null,
-                devValidated: false
+                devValidated: false,
+                gmudVersions: []
             }
         },
         mounted() {
@@ -908,6 +936,26 @@
             getVersionString() {
                 return `${this.version.major}.${this.version.minor}.${this.version.patch}`;
             },
+            entregarDemandas() {
+                const date = new Date().toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                this.actionCounter++;
+                this.addLog(`📦 Demandas entregues para todos os clientes em ${date}`);
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#10b981']
+                });
+
+                this.gmudVersions = [];
+            },
             // Novos métodos para deploy e testes
             deployEarlyAdopters() {
                 this.earlyAdoptersVersion = this.getVersionString();
@@ -917,6 +965,16 @@
 
             deployProduction() {
                 this.productionVersion = this.earlyAdoptersVersion;
+                this.gmudVersions.unshift({
+                    version: this.productionVersion,
+                    date: new Date().toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
+                });
                 this.testsEnabled = false;
                 this.testsPassed = false;
                 this.qaApproved = false;
@@ -933,6 +991,9 @@
                 this.qaApproved = Math.random() > 0.3; // 70% de chance de aprovação
                 this.updateApprovalStatus();
                 this.addLog(this.qaApproved ? '✅ QA aprovado' : '❌ QA rejeitou');
+                if (this.qaApproved){
+                    this.addLog('Monitorar ambiente de homologação por 1 ou 2 dias, sentry e outras ferramentas de análise');
+                }
             },
             updateApprovalStatus() {
                 if(this.testsPassed && this.qaApproved) {

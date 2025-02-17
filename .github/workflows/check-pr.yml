@@ -279,6 +279,18 @@ jobs:
           script: |
             const originalPR = context.payload.pull_request;
             console.log("PR original #" + originalPR.number);
+            // Verifica se já existe um PR aberto com o mesmo head para a branch develop
+            const existingPRs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              head: `${context.repo.owner}:${originalPR.head.ref}`,
+              base: "develop"
+            });
+            if (existingPRs.data.length > 0) {
+              console.log("Já existe um PR para develop com esse head. Nenhuma ação tomada.");
+              return;
+            }
             // Cria o PR para develop com corpo contendo apenas o link do PR original
             const newPR = await github.rest.pulls.create({
               owner: context.repo.owner,
@@ -330,3 +342,4 @@ jobs:
               body: `Pull Request para Main: ${originalPR.html_url}`
             });
             console.log("Redirecionamento para develop concluído.");
+      

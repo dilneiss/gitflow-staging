@@ -586,6 +586,14 @@
                 border-top: 2px solid rgba(255,255,255,0.1);
             }
         }
+        .server-box[style*="background: linear-gradient(145deg, #334155, #1e293b)"] {
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .server-box[style*="background: linear-gradient(145deg, #334155, #1e293b)"] .server-title::before {
+            background: #6366f1;
+            box-shadow: 0 0 8px #6366f1;
+        }
     </style>
 </head>
 <body>
@@ -606,6 +614,7 @@
 
         <!-- Topo com Servidores -->
         <div class="servers-top">
+            <h2 style="text-align: center; margin-bottom: 1rem; color: var(--primary)">🏭 Servidores</h2>
             <div class="servers-container">
                 <div class="server-box">
                     <div class="version-badge">PROD</div>
@@ -652,6 +661,32 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="server-box" style="background: linear-gradient(145deg, #334155, #1e293b); min-height: 450px;">
+                    <div class="version-badge">HML</div>
+                    <div class="server-title">
+                        <span>🧪 Homologação</span>
+                    </div>
+                    <div class="server-version">
+                        {{ homologationBranch || 'Nenhuma feature em teste' }}
+                    </div>
+                    <div class="deploy-buttons" v-if="homologationBranch">
+                        <button @click="runHomologationTests" class="success">
+                            🧪 Teste Automatizado
+                        </button>
+                        <button @click="validateDev" class="warning">
+                            ✅ Validar Dev
+                        </button>
+
+                        <div class="test-status" :class="hmlApprovalStatus">
+                            <span v-if="hmlTestsPassed">✅</span>
+                            <span v-if="devValidated">📋</span>
+                            {{ hmlApprovalMessage }}
+                        </div>
+
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -745,7 +780,10 @@
                         <div class="branch-header">{{ featureBranch.name }}</div>
                         <div class="action-buttons">
                             <button @click="commitFeature(featureBranch)">📝 Commit</button>
-                            <button @click="testFeatureBranch(featureBranch)" class="success">🧪 Testar</button>
+                            <!-- No template das feature branches -->
+                            <button @click="testFeatureBranch(featureBranch)" class="success">
+                                🧪 Enviar para Homologação
+                            </button>
                             <button @click="mergeFeatureBranch(featureBranch)" class="success">🔀 Merge</button>
                             <button @click="deleteFeatureBranch(featureBranch)" class="delete">🗑️ Excluir</button>
                         </div>
@@ -824,8 +862,12 @@
                 earlyAdoptersVersion: null,
                 testsEnabled: false,
                 testsPassed: false,
+                hmlTestsPassed: false,
                 qaApproved: false,
                 approvalMessage: 'Ambiente Atualizado',
+                hmlApprovalMessage: 'Aguardando testes automatizados',
+                homologationBranch: null,
+                devValidated: false
             }
         },
         mounted() {
@@ -849,6 +891,11 @@
             approvalStatus() {
                 if(this.testsPassed && this.qaApproved) return 'approved';
                 if(this.testsPassed || this.qaApproved) return 'pending';
+                return '';
+            },
+            hmlApprovalStatus() {
+                if(this.hmlTestsPassed) return 'approved';
+                if(!this.hmlTestsPassed) return 'pending';
                 return '';
             }
         },
@@ -1098,9 +1145,9 @@
                 });
             },
             testFeatureBranch(featureBranch) {
+                this.setHomologationBranch(featureBranch.name);
                 this.actionCounter++;
-                this.addLog(`🧪 TESTE AUTOMATIZADO em FEATURE ${featureBranch.name} no servidor`);
-                this.showTestEffect(featureBranch.name, 'automated');
+                this.addLog(`🧪 Enviou feature ${featureBranch.name} para homologação`);
             },
             autoTest() {
                 this.actionCounter++;
@@ -1163,6 +1210,36 @@
                         this.updateLinePositions();
                     });
                 }
+            },
+            setHomologationBranch(branchName) {
+                this.homologationBranch = branchName;
+                this.devValidated = false;
+                this.addLog(`🔧 Feature ${branchName} enviada para homologação`);
+            },
+
+            runHomologationTests() {
+                this.actionCounter++;
+                this.hmlTestsPassed = Math.random() > 0.2;
+                this.addLog(this.hmlTestsPassed
+                    ? `✅ Testes automatizados aprovados em ${this.homologationBranch}`
+                    : `❌ Testes falharam em ${this.homologationBranch}`);
+                if (this.hmlTestsPassed){
+                    this.hmlApprovalMessage = 'Testes aprovados';
+                }else{
+                    this.hmlApprovalMessage = '❌ Testes reprovados';
+                }
+            },
+
+            validateDev() {
+                this.actionCounter++;
+                this.devValidated = true;
+                this.addLog(`👨💻 Validação DEV realizada em ${this.homologationBranch}`);
+                confetti({
+                    particleCount: 50,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#3b82f6']
+                });
             },
             removeLinesFromBranch(branchName) {
                 this.lines = this.lines.filter(line =>

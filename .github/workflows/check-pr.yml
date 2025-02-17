@@ -342,4 +342,3 @@ jobs:
               body: `Pull Request para Main: ${originalPR.html_url}`
             });
             console.log("Redirecionamento para develop concluído.");
-      

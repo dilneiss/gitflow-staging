@@ -279,6 +279,7 @@ jobs:
           script: |
             const originalPR = context.payload.pull_request;
             console.log("PR original #" + originalPR.number);
+
             // Verifica se já existe um PR aberto com o mesmo head para a branch develop
             const existingPRs = await github.rest.pulls.list({
               owner: context.repo.owner,
@@ -291,6 +292,7 @@ jobs:
               console.log("Já existe um PR para develop com esse head. Nenhuma ação tomada.");
               return;
             }
+
             // Cria o PR para develop com corpo contendo apenas o link do PR original
             const newPR = await github.rest.pulls.create({
               owner: context.repo.owner,
@@ -303,11 +305,19 @@ jobs:
             core.setOutput("newPRUrl", newPR.data.html_url);
             core.setOutput("newPRNumber", newPR.data.number.toString());
             core.setOutput("originalPRUrl", originalPR.html_url);
-            // Obter revisores e assignees do PR original
-            const originalReviewers = originalPR.requested_reviewers.map(r => r.login);
-            const originalAssignees = originalPR.assignees.map(a => a.login);
+
+            // Obter detalhes atualizados do PR original para extrair revisores e assignees
+            const originalPRDetails = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: originalPR.number
+            });
+            const prData = originalPRDetails.data;
+            const originalReviewers = prData.requested_reviewers ? prData.requested_reviewers.map(r => r.login) : [];
+            const originalAssignees = prData.assignees ? prData.assignees.map(a => a.login) : [];
             console.log("Revisores originais: " + JSON.stringify(originalReviewers));
             console.log("Assignees originais: " + JSON.stringify(originalAssignees));
+
             // Adiciona os mesmos revisores ao novo PR, se houver
             if (originalReviewers.length > 0) {
               await github.rest.pulls.requestReviewers({
@@ -317,16 +327,17 @@ jobs:
                 reviewers: originalReviewers
               });
             }
-            // Atribui os mesmos assignees (além dos que já possam estar) no novo PR
-            const combinedAssignees = Array.from(new Set([...originalAssignees]));
-            if (combinedAssignees.length > 0) {
+
+            // Atribui os mesmos assignees no novo PR
+            if (originalAssignees.length > 0) {
               await github.rest.issues.addAssignees({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: newPR.data.number,
-                assignees: combinedAssignees
+                assignees: originalAssignees
               });
             }
+
             // Comenta no PR original com o link do PR para develop
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -334,6 +345,7 @@ jobs:
               issue_number: originalPR.number,
               body: `Pull Request para Develop: ${newPR.data.html_url}`
             });
+
             // Atualiza o corpo do novo PR para conter somente o link do PR original
             await github.rest.pulls.update({
               owner: context.repo.owner,

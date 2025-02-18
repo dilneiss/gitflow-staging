@@ -17,3 +17,16 @@
 
 # Para a criação de pull no auto
 - Habilitar: https://github.com/dilneiss/gitflow-staging/settings/actions
+
+# Testes com feature flag
+### Flagsmith
+- Acesso: https://app.flagsmith.com
+- SDK: https://github.com/Flagsmith/flagsmith-php-client
+- Prós: Fácil de usar, sistema muito simples
+- Cons: Não possui sdk oficial, sistema de cache não salva as variáveis necessárias em cache para usar posteriormente, 
+ias não estão funcionando corretamente o conhecimento que elas tem do sdk não oficial.
+- Final: Testar outras opções, dá pra usar adaptando bem ao nosso cenário tranquilo, mas se as outras opções
+funcionarem melhor, acredito ser melhor escolha.
+
+### Unleash
+- Em teste

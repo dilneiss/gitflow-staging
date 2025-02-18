@@ -7,7 +7,7 @@ $flagsmith = new Flagsmith('');
 
 $userIdentifier = "";
 
-$traits = (object)['sellercenter_name' => 'decathlon'];
+$traits = (object)['sellercenter_name' => 'decathlon', 'user_id' => 999, 'http_address' => 'http://127.0.0.1'];
 
 // 🔥 Obter flags personalizadas com segmentação
 $flags = $flagsmith->getIdentityFlags($userIdentifier, $traits);

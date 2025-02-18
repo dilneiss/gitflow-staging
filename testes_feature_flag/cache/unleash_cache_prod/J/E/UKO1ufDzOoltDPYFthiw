@@ -1,0 +1,3 @@
+1739905607
+unleash.client.feature.response
+s:497:"{"version":2,"features":[{"name":"feature_a","type":"release","enabled":true,"project":"default","stale":false,"strategies":[{"name":"flexibleRollout","constraints":[],"parameters":{"groupId":"feature_a","rollout":"100","stickiness":"default"},"variants":[]}],"variants":[],"description":null,"impressionData":false}],"query":{"project":["default"],"environment":"production","inlineSegmentConstraints":false},"segments":[],"meta":{"revisionId":12,"etag":"\"60e35fba:12\"","queryHash":"60e35fba"}}";

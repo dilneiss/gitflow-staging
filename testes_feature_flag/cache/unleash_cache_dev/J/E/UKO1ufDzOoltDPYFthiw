@@ -1,0 +1,3 @@
+1739905606
+unleash.client.feature.response
+s:366:"{"version":2,"features":[{"name":"feature_a","type":"release","enabled":false,"project":"default","stale":false,"strategies":[],"variants":[],"description":null,"impressionData":false}],"query":{"project":["default"],"environment":"development","inlineSegmentConstraints":false},"segments":[],"meta":{"revisionId":12,"etag":"\"1fc12c72:12\"","queryHash":"1fc12c72"}}";

@@ -32,3 +32,4 @@ funcionarem melhor, acredito ser melhor escolha.
 - Documentação para instalação: https://docs.getunleash.io/quickstart?_gl=1*17a6ws9*_gcl_au*MTA4ODE4MDg2Ni4xNzM4ODY1NTY3*_ga*MzkyNDEyMzQ4LjE3Mzg4NjU1Njc.*_ga_492KEZQRT8*MTczOTgyMDA5Mi4yLjEuMTczOTgyMDEwMy40OS4wLjA.
 - Prós: Tem métricas de quantidade de vezes que a feature foi vista, dashboard para saber quais features estão em funcionamento e em quanto tempo,
 vai ajudar muito tomar decisões se a feature foi muito testada ou pouco testada antes de liberar para todo mundo.
+- Gradual rollout: 50%, nem toda requisição vai ativar essa feature no mesmo projeto, é aleatório

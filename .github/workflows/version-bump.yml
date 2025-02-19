@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 jobs:
   version-bump:
@@ -33,13 +34,11 @@ jobs:
               if (msg.includes("hotfix/")) hotfixDetected = true;
             }
 
-            console.log("featureDetected:", featureDetected, "hotfixDetected:", hotfixDetected);
             if (!featureDetected && !hotfixDetected) {
               console.log("Nenhuma alteração de feature ou hotfix detectada. Encerrando.");
               return;
             }
 
-            // Obtém a lista de tags
             const tags = await github.rest.repos.listTags({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -47,13 +46,14 @@ jobs:
             });
 
             if (tags.data.length === 0) {
-              throw new Error("Nenhum tag encontrado no repositório.");
+              console.log("Nenhum tag encontrado no repositório. Criando v1.0.0.");
+              core.setOutput("new_version", "v1.0.0");
+              return;
             }
 
             const latestTag = tags.data[0].name;
             console.log("Última tag:", latestTag);
 
-            // Valida formato semver
             const semverRegex = /^v?(\d+)\.(\d+)\.(\d+)$/;
             const match = latestTag.match(semverRegex);
             if (!match) {
@@ -71,8 +71,7 @@ jobs:
               newVersion = `v${major}.${minor}.${patch + 1}`;
             }
 
-            console.log("Nova versão:", newVersion);
-
+            console.log("Nova versão detectada:", newVersion);
             core.setOutput("new_version", newVersion);
             core.setOutput("latest_tag", latestTag);
 
@@ -97,6 +96,8 @@ jobs:
         with:
           script: |
             const newVersion = process.env.NEW_VERSION || '${{ steps.version_bump.outputs.new_version }}';
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
             if (!newVersion) {
               console.log("Nenhuma alteração de versão detectada. Encerrando.");
               return;
@@ -129,7 +130,7 @@ jobs:
 
             console.log("Release criada com sucesso.");
             core.setOutput("release_id", release.data.id);
-
+            
       - name: Deploy para produção (Fake)
         run: |
           VERSION="${{ steps.version_bump.outputs.new_version }}"

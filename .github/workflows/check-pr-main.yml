@@ -312,6 +312,33 @@ jobs:
               return;
             }
 
+            // Verifica se há commits entre a branch atual e develop antes de criar o PR
+            try {
+              const compareResponse = await github.rest.repos.compareCommits({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                base: "develop",
+                head: originalPR.head.ref
+              });
+
+              if (compareResponse.data.commits.length === 0) {
+                console.log("Nenhuma diferença entre develop e " + originalPR.head.ref + ". PR não pode ser criado.");
+
+                // Comenta no PR original informando o problema
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: originalPR.number,
+                  body: `⚠️ Não foi possível criar um PR para develop porque não há diferenças entre develop e ${originalPR.head.ref}.`
+                });
+
+                return;
+              }
+            } catch (error) {
+              console.error("Erro ao comparar branches:", error);
+              return;
+            }
+
             // Cria o PR para develop com corpo contendo apenas o link do PR original
             const newPR = await github.rest.pulls.create({
               owner: context.repo.owner,
@@ -365,12 +392,6 @@ jobs:
               body: `Pull Request para Develop: ${newPR.data.html_url}`
             });
 
-            // Atualiza o corpo do novo PR para conter somente o link do PR original
-            await github.rest.pulls.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: newPR.data.number,
-              body: `Pull Request para Main: ${originalPR.html_url}`
-            });
             console.log("Redirecionamento para develop concluído.");
+      
       

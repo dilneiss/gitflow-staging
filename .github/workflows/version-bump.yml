@@ -126,19 +126,7 @@ jobs:
 
             console.log("Release criada com sucesso.");
             core.setOutput("release_id", release.data.id);
-      - name: Atualizar Issue Mensal de Releases
-        id: update_monthly_issue
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const newVersion = '${{ steps.version_bump.outputs.new_version }}';
-            if (!newVersion) {
-              console.log("Nenhuma alteração de versão detectada. Encerrando.");
-              return;
-            }
-
+            
             const now = new Date();
             const mesAtual = now.toLocaleString('pt-BR', { month: 'long' });
             const anoAtual = now.getFullYear();

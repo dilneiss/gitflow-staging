@@ -45,6 +45,8 @@ jobs:
             **4. A mudança foi homologada por QA?**
             - [ ] Sim
             - [ ] Não
+            
+            **5. Inclua o link da issue aqui: **
             `;
             const newBody = `${template}\n\n${currentBody}`;
             const now = new Date();

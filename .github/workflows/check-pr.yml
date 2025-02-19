@@ -47,7 +47,7 @@ jobs:
               repo: context.repo.repo,
               pull_number: pull_number,
               title: newTitle,
-              body: olá mundo
+              body: "olá mundo"
             });
 
       - name: Verificar se é edição do corpo do PR

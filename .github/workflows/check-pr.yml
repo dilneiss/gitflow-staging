@@ -25,6 +25,7 @@ jobs:
           script: |
             const pull_number = context.payload.pull_request.number;
             const currentTitle = context.payload.pull_request.title || "";
+            const currentBody = context.payload.pull_request.body || "";
             if (currentTitle.includes("GMUD")) {
               console.log("Título já contém GMUD, não atualizando.");
               return;

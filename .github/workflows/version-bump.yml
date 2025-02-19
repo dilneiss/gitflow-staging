@@ -23,14 +23,15 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const branchRef = context.payload.ref;
-            console.log("Branch detectada:", branchRef);
+            const commits = context.payload.commits;
+            let featureDetected = false;
+            let hotfixDetected = false;
 
-            const branchName = branchRef.replace("refs/heads/", "").toLowerCase();
-            console.log("Branch processada:", branchName);
-
-            let featureDetected = branchName.startsWith("feature/");
-            let hotfixDetected = branchName.startsWith("hotfix/");
+            for (const commit of commits) {
+              const msg = commit.message.toLowerCase();
+              if (msg.includes("feature/")) featureDetected = true;
+              if (msg.includes("hotfix/")) hotfixDetected = true;
+            }
 
             if (!featureDetected && !hotfixDetected) {
               console.log("Nenhuma alteração de feature ou hotfix detectada. Encerrando.");

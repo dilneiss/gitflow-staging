@@ -23,23 +23,20 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const commits = context.payload.commits;
-            let featureDetected = false;
-            let hotfixDetected = false;
+            const branchRef = context.payload.ref;
+            console.log("Branch detectada:", branchRef);
 
-            for (const commit of commits) {
-              const msg = commit.message.toLowerCase();
-              if (msg.includes("feature/")) featureDetected = true;
-              if (msg.includes("hotfix/")) hotfixDetected = true;
-            }
+            const branchName = branchRef.replace("refs/heads/", "").toLowerCase();
+            console.log("Branch processada:", branchName);
 
-            console.log("featureDetected:", featureDetected, "hotfixDetected:", hotfixDetected);
+            let featureDetected = branchName.startsWith("feature/");
+            let hotfixDetected = branchName.startsWith("hotfix/");
+
             if (!featureDetected && !hotfixDetected) {
               console.log("Nenhuma alteração de feature ou hotfix detectada. Encerrando.");
               return;
             }
 
-            // Obtém a lista de tags
             const tags = await github.rest.repos.listTags({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -47,13 +44,14 @@ jobs:
             });
 
             if (tags.data.length === 0) {
-              throw new Error("Nenhum tag encontrado no repositório.");
+              console.log("Nenhum tag encontrado no repositório. Criando v1.0.0.");
+              core.setOutput("new_version", "v1.0.0");
+              return;
             }
 
             const latestTag = tags.data[0].name;
             console.log("Última tag:", latestTag);
 
-            // Valida formato semver
             const semverRegex = /^v?(\d+)\.(\d+)\.(\d+)$/;
             const match = latestTag.match(semverRegex);
             if (!match) {
@@ -71,8 +69,7 @@ jobs:
               newVersion = `v${major}.${minor}.${patch + 1}`;
             }
 
-            console.log("Nova versão:", newVersion);
-
+            console.log("Nova versão detectada:", newVersion);
             core.setOutput("new_version", newVersion);
             core.setOutput("latest_tag", latestTag);
 
@@ -129,7 +126,6 @@ jobs:
 
             console.log("Release criada com sucesso.");
             core.setOutput("release_id", release.data.id);
-            
       - name: Atualizar Issue Mensal de Releases
         id: update_monthly_issue
         uses: actions/github-script@v6
@@ -137,7 +133,7 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const newVersion = process.env.NEW_VERSION;
+            const newVersion = '${{ steps.version_bump.outputs.new_version }}';
             if (!newVersion) {
               console.log("Nenhuma alteração de versão detectada. Encerrando.");
               return;
@@ -168,37 +164,19 @@ jobs:
               }
             }
 
-            // Obtém o último PR mergeado
-            const latestMergePRs = await github.rest.pulls.list({
+            // Obtém commits associados à nova tag
+            const commitsResponse = await github.rest.repos.listCommits({
               owner: owner,
               repo: repo,
-              state: "closed",
-              base: "main",
-              per_page: 10
+              sha: newVersion,
+              per_page: 20
             });
 
-            const mergedPR = latestMergePRs.data.find(pr => pr.merged_at);
-            if (!mergedPR) {
-              console.log("Nenhum PR mergeado encontrado.");
-              return;
-            }
-
-            const prNumber = mergedPR.number;
-            const prTitle = mergedPR.title;
-            const prUrl = mergedPR.html_url;
-
-            // Obtém commits do PR
-            const commitList = await github.rest.pulls.listCommits({
-              owner: owner,
-              repo: repo,
-              pull_number: prNumber
-            });
-
-            const commitMessages = commitList.data.map(commit => `- ${commit.commit.message}`).join("\n");
+            const commitMessages = commitsResponse.data.map(commit => `- ${commit.commit.message}`).join("\n");
 
             const newEntry = `
             ### ${newVersion}
-            **Merge #${prNumber}** - [${prTitle}](${prUrl})
+            **Commits da Versão:**
             ${commitMessages}
             `;
 
@@ -211,6 +189,7 @@ jobs:
                 issue_number: issueNumber,
                 body: newIssueBody
               });
+              console.log(`Issue #${issueNumber} atualizada com a nova versão.`);
             } else {
               await github.rest.issues.create({
                 owner: owner,
@@ -219,6 +198,7 @@ jobs:
                 body: newEntry,
                 labels: ["release-summary"]
               });
+              console.log(`Nova Issue criada para ${issueTitle}.`);
             }
 
       - name: Deploy para produção (Fake)

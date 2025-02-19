@@ -156,20 +156,24 @@ jobs:
               }
             }
 
-            // Obtém commits associados à nova tag
-            const commitsResponse = await github.rest.repos.listCommits({
+            // Obtém a última tag antes da nova versão
+            const latestTag = '${{ steps.version_bump.outputs.latest_tag }}';
+            
+            // Comparação de commits entre a tag anterior e a nova versão
+            const compareResponse = await octokit.rest.repos.compareCommits({
               owner: owner,
               repo: repo,
-              sha: newVersion,
-              per_page: 20
+              base: latestTag,
+              head: newVersion
             });
-
-            const commitMessages = commitsResponse.data.map(commit => `- ${commit.commit.message}`).join("\n");
-
+            
+            // Pega apenas os commits **entre as duas versões**
+            const commitMessages = compareResponse.data.commits.map(commit => `- ${commit.commit.message}`).join("\n");
+            
             const newEntry = `
             ### ${newVersion}
-            **Commits da Versão:**
-            ${commitMessages}
+              **Commits da Versão:**
+              ${commitMessages}
             `;
 
             let newIssueBody = existingBody + newEntry;

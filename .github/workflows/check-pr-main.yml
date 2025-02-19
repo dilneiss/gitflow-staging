@@ -46,7 +46,7 @@ jobs:
             - [ ] Sim
             - [ ] Não
             
-            **5. Inclua o link da issue aqui: **
+            **5. Inclua o link da issue aqui:**
             `;
             const newBody = `${template}\n\n${currentBody}`;
             const now = new Date();

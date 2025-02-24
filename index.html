@@ -746,6 +746,8 @@
                         <div class="branch-header">Hotfix</div>
                         <div class="action-buttons">
                             <button @click="commitAction('hotfix')">📝 Commit</button>
+                            <button @click="autoTest('HOTFIX', 'hotfix')" class="success">🧪 Testes Automatizados</button>
+                            <button @click="qaTestFeature('HOTFIX', 'hotfix')" class="success">🧪 Validação do DEV</button>
                             <button @click="mergeHotfix" class="success">🔀 Merge</button>
                             <button @click="deleteBranch('hotfix')" class="delete">🗑️ Excluir</button>
                         </div>
@@ -765,6 +767,8 @@
                     <div v-if="showRelease" class="branch-column">
                         <div class="branch-header">Release</div>
                         <div class="action-buttons">
+                            <button @click="autoTest('RELEASE', 'release')" class="success">🧪 Testes Automatizados</button>
+                            <button @click="qaTestFeature('RELEASE', 'release')" class="success">🧪 Validação do DEV</button>
                             <button @click="commitAction('release')">📝 Commit</button>
                             <button @click="mergeRelease" class="success">🔀 Merge</button>
                             <button @click="deleteBranch('release')" class="delete">🗑️ Excluir</button>
@@ -1261,25 +1265,15 @@
                 this.actionCounter++;
                 this.addLog(`🧪 Enviou feature ${featureBranch.name} para homologação`);
             },
-            autoTest() {
+            autoTest(branchName = 'DESENVOLVIMENTO', branch = 'develop') {
                 this.actionCounter++;
-                this.addLog(`🧪 TESTE AUTOMATIZADO em DESENVOLVIMENTO`, 'automated-test');
-                this.showTestEffect('develop', 'automated');
+                this.addLog(`TESTE AUTOMATIZADO em `+branchName, 'automated-test');
+                this.showTestEffect(branch, 'automated');
             },
-            autoTestHotfix() {
+            qaTestFeature(branchName = 'DESENVOLVIMENTO', branch = 'develop') {
                 this.actionCounter++;
-                this.addLog(`🧪 TESTE AUTOMATIZADO em HOTFIX no próprio computador`, 'automated-test');
-                this.showTestEffect('hotfix', 'automated');
-            },
-            autoTestRelease() {
-                this.actionCounter++;
-                this.addLog(`🧪 TESTE AUTOMATIZADO em RELEASE`, 'automated-test');
-                this.showTestEffect('release', 'automated');
-            },
-            qaTestFeature() {
-                this.actionCounter++;
-                this.addLog(`📋 TESTE MANUAL QA em DESENVOLVIMENTO`, 'qa-test');
-                this.showTestEffect('develop', 'qa');
+                this.addLog(`TESTE MANUAL em `+branchName, 'qa-test');
+                this.showTestEffect(branch, 'qa');
             },
             showTestEffect(branch, testType) {
                 const branchColumn = [...document.querySelectorAll('.branch-header')]

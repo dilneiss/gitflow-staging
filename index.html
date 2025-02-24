@@ -1190,18 +1190,48 @@
                 if (!hfxList.length) return;
                 const lastHfx = hfxList[hfxList.length - 1];
                 if (!lastHfx) return;
+
                 this.mergeApproval(() => {
-                    this.version.patch++;
-                    const newMst = this.createCommit('master', false);
-                    const newDev = this.createCommit('develop', false);
-                    this.lines.push(
-                        { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'master', toId: newMst.id, x1: 0, y1: 0, x2: 0, y2: 0, isNew: true },
-                        { fromBranch: 'hotfix', fromId: lastHfx.id, toBranch: 'develop', toId: newDev.id, x1: 0, y1: 0, x2: 0, y2: 0, isNew: true }
-                    );
-                    this.actionCounter++;
-                    this.addLog(`🔀 Merge HOTFIX -> MASTER & DEVELOP`);
-                    this.addLog(`🏷️ Nova versão criada a partir da MASTER automaticamente: ${this.getVersionString()}`);
-                    this.$nextTick(() => { this.updateLinePositions(); });
+                    // Armazena dados para usar após GMUD
+                    this.mergeModalData = {
+                        lastHfx: lastHfx,
+                        callback: () => {
+                            // Executa somente após confirmação da GMUD
+                            this.version.patch++;
+
+                            const newMst = this.createCommit('master', false);
+                            const newDev = this.createCommit('develop', false);
+
+                            this.lines.push(
+                                {
+                                    fromBranch: 'hotfix',
+                                    fromId: lastHfx.id,
+                                    toBranch: 'master',
+                                    toId: newMst.id,
+                                    x1: 0, y1: 0, x2: 0, y2: 0,
+                                    isNew: true
+                                },
+                                {
+                                    fromBranch: 'hotfix',
+                                    fromId: lastHfx.id,
+                                    toBranch: 'develop',
+                                    toId: newDev.id,
+                                    x1: 0, y1: 0, x2: 0, y2: 0,
+                                    isNew: true
+                                }
+                            );
+
+                            this.actionCounter++;
+                            this.addLog(`🔀 Merge HOTFIX -> MASTER & DEVELOP`);
+                            this.addLog(`🏷️ Nova versão: ${this.getVersionString()}`);
+
+                            this.$nextTick(() => {
+                                this.updateLinePositions();
+                            });
+                        }
+                    };
+
+                    // Chama a GMUD após aprovação do merge
                     this.gmudApproval();
                 });
             },

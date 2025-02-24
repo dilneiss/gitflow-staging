@@ -13,62 +13,62 @@ jobs:
   atualizar-pr:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout do código
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Atualizar título do PR para main
-        if: github.event.pull_request.base.ref == 'main'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const pull_number = context.payload.pull_request.number;
-            const currentTitle = context.payload.pull_request.title || "";
-            const currentBody = context.payload.pull_request.body || "";
-            if (currentTitle.includes("GMUD")) {
-              console.log("Título já contém GMUD, não atualizando.");
-              return;
-            }
-            const template = `
-            **1. Essa mudança pode quebrar o sistema?**
-            - [ ] Sim
-            - [ ] Não
-
-            **2. Caso a resposta acima for "Sim", detalhe o motivo:**
-
-            **3. Classifique a prioridade dessa mudança:**
-            - [ ] Crítica
-            - [ ] N/A
-            - [ ] Normal
-
-            **4. A mudança foi homologada por QA?**
-            - [ ] Sim
-            - [ ] Não
-            
-            **5. Inclua o link da issue aqui:**
-            `;
-            const newBody = `${template}\n\n${currentBody}`;
-            const now = new Date();
-            const nowFormatted = now.toLocaleString('pt-BR', {
-              timeZone: 'America/Sao_Paulo',
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false
-            });
-            const newTitle = `Solicitação de GMUD - ${nowFormatted}`;
-            console.log("Atualizando título para: " + newTitle);
-            await github.rest.pulls.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pull_number,
-              title: newTitle,
-              body: newBody
-            });
+#      - name: Checkout do código
+#        uses: actions/checkout@v2
+#        with:
+#          fetch-depth: 0
+#
+#      - name: Atualizar título do PR para main
+#        if: github.event.pull_request.base.ref == 'main'
+#        uses: actions/github-script@v6
+#        with:
+#          script: |
+#            const pull_number = context.payload.pull_request.number;
+#            const currentTitle = context.payload.pull_request.title || "";
+#            const currentBody = context.payload.pull_request.body || "";
+#            if (currentTitle.includes("GMUD")) {
+#              console.log("Título já contém GMUD, não atualizando.");
+#              return;
+#            }
+#            const template = `
+#            **1. Essa mudança pode quebrar o sistema?**
+#            - [ ] Sim
+#            - [ ] Não
+#
+#            **2. Caso a resposta acima for "Sim", detalhe o motivo:**
+#
+#            **3. Classifique a prioridade dessa mudança:**
+#            - [ ] Crítica
+#            - [ ] N/A
+#            - [ ] Normal
+#
+#            **4. A mudança foi homologada por QA?**
+#            - [ ] Sim
+#            - [ ] Não
+#
+#            **5. Inclua o link da issue aqui:**
+#            `;
+#            const newBody = `${template}\n\n${currentBody}`;
+#            const now = new Date();
+#            const nowFormatted = now.toLocaleString('pt-BR', {
+#              timeZone: 'America/Sao_Paulo',
+#              day: '2-digit',
+#              month: '2-digit',
+#              year: 'numeric',
+#              hour: '2-digit',
+#              minute: '2-digit',
+#              second: '2-digit',
+#              hour12: false
+#            });
+#            const newTitle = `Solicitação de GMUD - ${nowFormatted}`;
+#            console.log("Atualizando título para: " + newTitle);
+#            await github.rest.pulls.update({
+#              owner: context.repo.owner,
+#              repo: context.repo.repo,
+#              pull_number: pull_number,
+#              title: newTitle,
+#              body: newBody
+#            });
 
       - name: Verificar se é edição do corpo do PR
         id: check_event

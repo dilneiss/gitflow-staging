@@ -13,11 +13,11 @@ jobs:
   atualizar-pr:
     runs-on: ubuntu-latest
     steps:
-#      - name: Checkout do código
-#        uses: actions/checkout@v2
-#        with:
-#          fetch-depth: 0
-#
+      - name: Checkout do código
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
 #      - name: Atualizar título do PR para main
 #        if: github.event.pull_request.base.ref == 'main'
 #        uses: actions/github-script@v6

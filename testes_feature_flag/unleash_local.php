@@ -12,22 +12,22 @@ $cache_prod = new Psr16Cache(new FilesystemAdapter('unleash_cache_prod', 3600, _
 
 
 $context = (new \Unleash\Client\Configuration\UnleashContext())
-    ->setCustomProperty('early_adopters', 'decathlon') // 🔥 Valor a ser validado na regra da feature flag
+    ->setCustomProperty('sellercenter_name', 'decathlon') // 🔥 Valor a ser validado na regra da feature flag
     ->setCurrentUserId('999'); // Opcional: pode enviar outros dados do usuário
 
 $context2 = (new \Unleash\Client\Configuration\UnleashContext())
-    ->setCustomProperty('early_adopters', 'decathlon') // 🔥 Valor a ser validado na regra da feature flag
+    ->setCustomProperty('sellercenter_name', 'decathlon') // 🔥 Valor a ser validado na regra da feature flag
     ->setCurrentUserId('99'); // Opcional: pode enviar outros dados do usuário
 
 $context3 = (new \Unleash\Client\Configuration\UnleashContext())
-    ->setCustomProperty('early_adopters', 'decathlon') // 🔥 Valor a ser validado na regra da feature flag
+    ->setCustomProperty('sellercenter_name', 'decathlon') // 🔥 Valor a ser validado na regra da feature flag
     ->setCurrentUserId('999'); // Opcional: pode enviar outros dados do usuário
 
 // 🔥 Dev
 $unleashDev = UnleashBuilder::create()
     ->withAppName('Casa e Vídeo') //nome do cliente
     ->withAppUrl('http://localhost:4242/api/') //url do endpoint onde está hospedado
-    ->withHeader('Authorization', 'default:development.cd639059d6e0e182bffc3860b514304c5a925632f333737b81879eda')
+    ->withHeader('Authorization', 'default:development.c6ef8897107320ca29d5a53bb9389e0fdcf9c8999fde35f8daba9203')
     ->withInstanceId('1')
     ->withCacheHandler($cache_dev)
     ->build();
@@ -44,7 +44,7 @@ d('Produção');
 $unleashProd = UnleashBuilder::create()
     ->withAppName('Decathlon')
     ->withAppUrl('http://localhost:4242/api/')
-    ->withHeader('Authorization', 'default:production.4a1739a3a4c05f5caf3e1a97a8c07cffa5b1725b0eda0f20c8416941')
+    ->withHeader('Authorization', 'default:production.a8391a0b863199a28af283728fbeb20e72e6bef602c38713cf53a6ef')
     ->withInstanceId('2')
     ->withCacheHandler($cache_prod)
     ->build();

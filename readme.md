@@ -33,3 +33,6 @@ funcionarem melhor, acredito ser melhor escolha.
 - Prós: Tem métricas de quantidade de vezes que a feature foi vista, dashboard para saber quais features estão em funcionamento e em quanto tempo,
 vai ajudar muito tomar decisões se a feature foi muito testada ou pouco testada antes de liberar para todo mundo.
 - Gradual rollout: 50%, nem toda requisição vai ativar essa feature no mesmo projeto, é aleatório
+
+### testes
+abc
